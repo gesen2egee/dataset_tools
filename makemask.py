@@ -1,4 +1,4 @@
-#需先安裝 pip install numpy Pillow opencv-python dghs-imgutils[gpu]
+#需先安裝 pip install numpy Pillow dghs-imgutils[gpu]
 from imgutils.detect import detect_faces, detect_heads, detection_visualize
 import numpy as np
 from PIL import Image
