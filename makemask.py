@@ -136,4 +136,4 @@ if __name__ == '__main__':
     args = parse_arguments()
     
     augmenter = ImageAugmenterNP()
-    augmenter.process_images_from_folder('.', args.threshold, args.simple_background)
+    augmenter.process_images_from_folder('.', args.mask_threshold, args.simple_background, args.prune_background_tag)
