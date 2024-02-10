@@ -1,5 +1,5 @@
 #需先安裝 pip install numpy Pillow dghs-imgutils[gpu]
-from imgutils.detect import detect_faces, detect_heads, detection_visualize
+from imgutils.detect import detect_faces, detect_heads, detect_person, detection_visualize
 import numpy as np
 from PIL import Image
 import argparse
@@ -8,7 +8,7 @@ import re
         
 class ImageAugmenterNP:
 
-    def apply_masks_based_on_detection(self, image_path, mask_face=False, mask_head=False):
+    def apply_masks_based_on_detection(self, image_path, mask_face=False, mask_head=False, keep_characters=False):
         image = Image.open(image_path)
         image_np = np.array(image.convert('RGBA'))
         
@@ -19,8 +19,12 @@ class ImageAugmenterNP:
         if mask_head:
             result = detect_heads(image_path)
             image_np = self.apply_mask(image_np, result)
-
-        return Image.fromarray(image_np)
+            
+        if keep_characters:
+            result = detect_person(image_path)
+            image_np = self.keep_characters_and_mask(image_np, result)
+            
+        return image_np
 
     def apply_mask(self, image_np, detections):
         for detection in detections:
@@ -29,6 +33,18 @@ class ImageAugmenterNP:
             image_np[y1:y2, x1:x2, :3] = 0  # RGB值設為(0, 0, 0)達到全黑效果
         return image_np
         
+    def keep_characters_and_mask(self, image_np, detections):
+        # 首先創建一個全黑的圖像
+        masked_image = np.zeros_like(image_np)
+
+        for detection in detections:
+            bbox, _, _ = detection
+            x1, y1, x2, y2 = bbox
+            # 將檢測到的角色區域從原始圖像複製到全黑的圖像中
+            masked_image[y1:y2, x1:x2, :3] = image_np[y1:y2, x1:x2, :3]
+
+        return masked_image
+    
     def prune_background_tags(self, txt_path):
         background_tags = [
             r"simple.?background.?\s?",
@@ -82,7 +98,7 @@ class ImageAugmenterNP:
 
         return simple_color, simple_colorratio > threshold
 
-    def process_images_from_folder(self, folder_path: str, mask_threshold: float, simple_background: bool = False, prune_background_tag: bool = False, mask_face=False, mask_head=False):
+    def process_images_from_folder(self, folder_path: str, mask_threshold: float, simple_background: bool = False, prune_background_tag: bool = False, mask_face=False, mask_head=False, keep_characters=False):
         """
         讀取腳本所在第一級子資料夾內所有圖片(排除mask資料夾)，
         將圖片中的透明、純黑(0, 0, 0)和純白(255, 255, 255)像素設為蒙版，
@@ -92,7 +108,8 @@ class ImageAugmenterNP:
         :param -s : simple_background-是否統計圖片邊緣的顏色，判斷是否單色背景並加入蒙版 (預設門檻 0.5)。
         :param -p : prune_background_tag-如果蒙版像素所佔全圖比例較高(預設門檻 0.3)，自動刪除同名txt中的background_tags。
         :param -f : mask_face-在圖像中偵測臉部並自動應用蒙版 (範圍較小，不包括髮型和髮飾)。
-        :param -head : mask_head-在圖像中偵測頭部並自動應用蒙版 (範圍較大，可能蒙版到領口)。        
+        :param -head : mask_head-在圖像中偵測頭部並自動應用蒙版 (範圍較大，可能蒙版到領口)。 
+        :param -c : keep_characters-在圖像中偵測角色並自動應用蒙版於非角色。       
         """    
         for dir_name in next(os.walk(folder_path))[1]:
             current_folder = os.path.join(folder_path, dir_name)
@@ -108,13 +125,11 @@ class ImageAugmenterNP:
                         continue
                     try:
                         with Image.open(image_path) as image:
-                            if image.mode != 'RGBA':
-                                image = image.convert('RGBA')
                                 
-                            image = self.apply_masks_based_on_detection(image_path, mask_face, mask_head)
+                            image_np = self.apply_masks_based_on_detection(image_path, mask_face, mask_head, keep_characters)
                             
                             # 使用Numpy進行圖像處理
-                            image_np = np.array(image)
+                            # image_np = np.array(image)
                             
                             is_simple = False
                             if simple_background:
@@ -158,10 +173,11 @@ def parse_arguments():
     parser.add_argument('-p', '--prune_background_tag', action='store_true', help='Enable auto pruning of background tags in the corresponding text file.')
     parser.add_argument('-f', '--mask_face', action='store_true', help='Detect faces in the image and apply a mask to the detected areas.')    
     parser.add_argument('-head', '--mask_head', action='store_true', help='Detect heads in the image and apply a mask to the detected areas.')    
+    parser.add_argument('-c', '--keep_characters', action='store_true', help='Detect characters in the image and apply a mask to others.')    
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_arguments()
     
     augmenter = ImageAugmenterNP()
-    augmenter.process_images_from_folder('.', args.mask_threshold, args.simple_background, args.prune_background_tag, args.mask_face, args.mask_head)
+    augmenter.process_images_from_folder('.', args.mask_threshold, args.simple_background, args.prune_background_tag, args.mask_face, args.mask_head, args.keep_characters)
