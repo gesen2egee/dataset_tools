@@ -162,7 +162,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
     if chartags and len(chartags) <= 3:
         return f'{concept_tag}the characters in this image are {" and ".join(chartags)}', ', '.join(chartags), boorutag
     
-    return f'{concept_tag}{chartag_from_folder} and lots of characters in this image', ', '.join(chartags), boorutag
+    return f'{concept_tag}{chartag_from_folder}', ', '.join(chartags), boorutag
 
 def calculate_best_labels(image, long_caption, short_caption, image_path):  
     labels = [label for label in long_caption.split(", ") + short_caption.split(", ") if label.strip()]
