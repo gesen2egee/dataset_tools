@@ -234,6 +234,10 @@ def calculate_best_labels(image, long_caption, short_caption):
                 if selected_labels[i] == "" and improvement >= threshold:
                     selected_labels[i] = labels
 
+    combined_text_features = F.normalize(combined_text_features, dim=-1)
+    with torch.no_grad():
+        final_score = (image_features @ combined_text_features.T).cpu().numpy()[0][0]
+        
     return selected_labels, final_score
 
 def build_folder_chartag(text, folder_chartag):
@@ -415,7 +419,7 @@ def find_and_process_images(directory, args):
         if args.drop_chartag and folder_chartag:
             drop_chartags_in_folder(root, folder_chartag)
 
-    if all_final_scores and None:
+    if all_final_scores:
         max_score = max(all_final_scores, key=lambda x: x[1])[1]
         min_score = min(all_final_scores, key=lambda x: x[1])[1]
 
