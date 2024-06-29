@@ -8,7 +8,7 @@ import sys
 def download_file(url, filename):
     try:
         response = requests.get(url)
-        response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
+        response.raise_for_status()  # This will raise一个 HTTPError如果 HTTP 请求返回了一个不成功的状态码
         with open(filename, 'wb') as file:
             file.write(response.content)
         print(f"Downloaded {filename} from {url}")
@@ -37,16 +37,23 @@ def run_main_script_in_venv(args):
     else:
         activate_script = os.path.join('venv', 'bin', 'activate')
 
-    command_args = " ".join([
+    command_args = [
         "--folder_name" if args.folder_name else "",
         "--drop_chartag" if args.drop_chartag else "",
         "--not_char" if args.not_char else "",
         "--use_norm" if args.use_norm else "",
         f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
         args.directory
-    ]).strip()
+    ]
 
-    command = f"{activate_script} && python {main_script_filename} {command_args}" if os.name == 'nt' else f"source {activate_script} && python {main_script_filename} {command_args}"
+    # 过滤掉空字符串
+    command_args = [arg for arg in command_args if arg]
+
+    if os.name == 'nt':
+        command = f"{activate_script} && python {main_script_filename} " + subprocess.list2cmdline(command_args)
+    else:
+        command = f"source {activate_script} && python {main_script_filename} " + subprocess.list2cmdline(command_args)
+
     subprocess.run(command, shell=True, check=True)
 
 if __name__ == "__main__":
@@ -55,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("--drop_chartag", action="store_true", help="自動刪除角色特徵標籤")
     parser.add_argument("--not_char", action="store_true", help="目錄名不是角色")
     parser.add_argument("--use_norm", action="store_true", help="忽略clip文字向量長度，標會較短")
-    parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")    
+    parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
     parser.add_argument("directory", type=str, help="處理目錄地址")
     args = parser.parse_args()
 
