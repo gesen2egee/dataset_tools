@@ -182,7 +182,7 @@ def calculate_best_labels(image, long_caption, short_caption, image_path):
     top_clip_labels = [clip_scores[0][0], clip_scores[1][0], clip_scores[2][0]]
     labels = labels + top_clip_labels
     for label in labels:
-        if label not in clip_text_features_dict:
+        if label not in text_features_dict:
             text_tensor = longclip.tokenize([label]).to(device)
             with torch.no_grad():
                 text_features = clip_model.encode_text(text_tensor)
