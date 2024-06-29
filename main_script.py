@@ -446,10 +446,10 @@ def find_and_process_images(directory, args):
                     content = file.read()
                 if accuracy_tag:
                     modified_content = content.replace('___', f'{accuracy_tag}, ___')
-
-                # 将修改后的内容写回文件
-                with open(tag_file_path, 'w', encoding='utf-8') as file:
-                    file.write(modified_content)
+    
+                    # 将修改后的内容写回文件
+                    with open(tag_file_path, 'w', encoding='utf-8') as file:
+                        file.write(modified_content)
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="圖片標籤處理腳本")
