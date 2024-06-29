@@ -435,7 +435,7 @@ def find_and_process_images(directory, args):
             relative_score = (final_score - min_score) / (max_score - min_score)
             if relative_score >= 0.4:
                 accuracy_tag = ""
-            elif relative_score >= 0.1:
+            elif relative_score >= 0.2:
                 accuracy_tag = "low accuracy"
             else:
                 accuracy_tag = "mess"
