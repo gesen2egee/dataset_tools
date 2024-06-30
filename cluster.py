@@ -393,7 +393,7 @@ def process_image(image_path, args):
         rating, features, chars = get_wd14_tags(image_resize, character_threshold=0.7, general_threshold=0.2682, model_name="ConvNext_v3",drop_overlap=True)
         features, keep_tags = process_features(features)
         rating = max(rating, key=rating.get)
-        tags_text = f"|||{tags_to_text(features, use_escape=True, use_spaces=True)}\n\n\n\n"
+        tags_text = f"___{tags_to_text(features, use_escape=True, use_spaces=True)}\n\n\n\n"
 
         special_text, boorutag = generate_special_text(image_path, folder_name, args, features, chars)
         if rating:
@@ -402,7 +402,7 @@ def process_image(image_path, args):
             special_text += f", {keep_tags}"
         tags_lines = tags_text.split('\n')
         tags_text = '\n'.join(f"{special_text}, {line}" for line in tags_lines)
-        #tags_text = tags_text.replace("|||,",f"{boorutag}|||,")
+        #tags_text = tags_text.replace("___,",f"{boorutag}___,")
 
         with open(tag_file_path, 'w', encoding='utf-8') as f:
             f.write(tags_text.lower())        
@@ -445,8 +445,8 @@ def process_subfolder(subfolder_path: str, args, md_filepath: str):
             if image_path and os.path.exists(txt_file):
                 with open(txt_file, 'r', encoding='utf-8') as f:
                     first_line = f.readline().strip()
-                    if '|||' in first_line:
-                        tags = first_line.split('|||')[1].strip() if len(first_line.split('|||')) > 1 else ''
+                    if '___' in first_line:
+                        tags = first_line.split('___')[1].strip() if len(first_line.split('___')) > 1 else ''
                     else:
                         tags = first_line.split(', ', 1)[1] if ', ' in first_line else first_line
                     image_info_list.append({
