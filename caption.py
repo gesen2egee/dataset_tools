@@ -40,6 +40,7 @@ def run_main_script_in_venv(args):
     command_args = [
         "--folder_name" if args.folder_name else "",
         "--drop_chartag" if args.drop_chartag else "",
+        "--drop_colortag" if args.drop_colortag else "",
         "--not_char" if args.not_char else "",
         "--use_norm" if args.use_norm else "",
         f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
@@ -60,6 +61,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="在虛擬環境中運行主腳本")
     parser.add_argument("--folder_name", action="store_true", help="使用目錄名當作角色名")
     parser.add_argument("--drop_chartag", action="store_true", help="自動刪除角色特徵標籤")
+    parser.add_argument("--drop_colortag", action="store_true", help="自動刪除顏色特徵標籤")
     parser.add_argument("--not_char", action="store_true", help="目錄名不是角色")
     parser.add_argument("--use_norm", action="store_true", help="忽略clip文字向量長度，標會較短")
     parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
