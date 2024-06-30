@@ -29,8 +29,7 @@ def run_main_script_in_venv(args):
     main_script_url = "https://raw.githubusercontent.com/gesen2egee/dataset_tools/main/main_script.py"
     main_script_filename = "main_script.py"
 
-    if not os.path.exists(main_script_filename):
-        download_file(main_script_url, main_script_filename)
+    download_file(main_script_url, main_script_filename)
 
     if platform.system() == 'Windows':
         activate_script = os.path.join('venv', 'Scripts', 'activate.bat')
@@ -41,6 +40,7 @@ def run_main_script_in_venv(args):
         "--folder_name" if args.folder_name else "",
         "--drop_chartag" if args.drop_chartag else "",
         "--drop_colortag" if args.drop_colortag else "",
+        "--clothtag" if args.clothtag else "",
         "--not_char" if args.not_char else "",
         "--use_norm" if args.use_norm else "",
         f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
@@ -62,6 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("--folder_name", action="store_true", help="使用目錄名當作角色名")
     parser.add_argument("--drop_chartag", action="store_true", help="自動刪除角色特徵標籤")
     parser.add_argument("--drop_colortag", action="store_true", help="自動刪除顏色特徵標籤")
+    parser.add_argument("--clothtag", action="store_true", help="自動處理服裝標籤")
     parser.add_argument("--not_char", action="store_true", help="目錄名不是角色")
     parser.add_argument("--use_norm", action="store_true", help="忽略clip文字向量長度，標會較短")
     parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
