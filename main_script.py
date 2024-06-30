@@ -483,6 +483,7 @@ if __name__ == "__main__":
     parser.add_argument("--folder_name", action="store_true", help="使用目錄名當作角色名")
     parser.add_argument("--drop_chartag", action="store_true", help="自動刪除角色特徵標籤")
     parser.add_argument("--drop_colortag", action="store_true", help="自動刪除顏色特徵標籤")
+    parser.add_argument("--clothtag", action="store_true", help="自動處理服裝標籤")
     parser.add_argument("--not_char", action="store_true", help="目錄名不是角色")
     parser.add_argument("--use_norm", action="store_true", help="忽略clip文字向量長度，標會較短")
     parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")    
