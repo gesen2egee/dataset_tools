@@ -133,7 +133,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
             chartag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip()
             chartags.add(chartag_from_folder)
         else:
-            concept_tag = f"{parent_folder.split('_')[1].replace('_', ' ').strip(), } is main concept of the image, "
+            concept_tag = f"{parent_folder.split('_')[1].replace('_', ' ').strip()} concept image, "
             
     # 處理 boorutag 文件內容
     if boorutag_path:
@@ -173,7 +173,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
         chartags = []
     
     if not chartag_from_folder and features and "solo" in features:
-        return f"{concept_tag}{' '.join(chartags)}" if chartags else "", ', '.join(chartags), boorutag, artisttag
+        return f"{concept_tag}{' '.join(chartags)}" if chartags else f"{concept_tag}", ', '.join(chartags), boorutag, artisttag
 
     return f'{concept_tag}{" and ".join(chartags)}', ', '.join(chartags), boorutag, artisttag
     
