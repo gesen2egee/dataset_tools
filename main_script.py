@@ -26,6 +26,7 @@ import fnmatch
 from imgutils.tagging import get_wd14_tags, tags_to_text, drop_blacklisted_tags, drop_basic_character_tags, drop_overlap_tags
 from imgutils.validate import anime_dbrating
 import traceback
+import json
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_id = 'microsoft/Florence-2-large'
@@ -50,12 +51,7 @@ people_tags = [
     r'^1girl$', r'^1boy$', r'^69$', r'^absolutely_everyone$', r'^after_kiss$', r'^age_comparison$', r'^age_difference$', r'^age_progression$', r'^angel_and_devil$', r'^anilingus$', r'^ankle_grab$', r'^anti-aircraft$', r'^armpit_sex$', r'^arms_around_neck$', r'^arms_around_waist$', r'^arm_around_back$', r'^arm_around_neck$', r'^arm_around_shoulder$', r'^arm_around_waist$', r'^arm_held_back$', r'^arm_hug$', r'^ass-to-ass$', r'^asymmetrical_docking$', r'^back-to-back$', r'^band$', r'^behind_another$', r'^black_vs_white$', r'^bound_together$', r'^boy_on_top$', r'^boy_sandwich$', r'^breastfeeding$', r'^breasts_on_head$', r'^breast_envy$', r'^grabbing_another\'s_breast$', r'^breast_smother$', r'^breast_sucking$', r'^buttjob$', r'^caressing_testicles$', r'^carrying_person$', r'^chart$', r'^chasing$', r'^cheating_\(relationship\)$', r'^cheek-to-cheek$', r'^chikan$', r'^child_carry$', r'^child_on_child$', r'^circle_formation$', r'^clog_sandals$', r'^clone$', r'^clothed_female_nude_female$', r'^clothed_female_nude_male$', r'^clothed_male_nude_female$', r'^clothed_sex$', r'^coffee_cup$', r'^collage$', r'^colored_text$', r'^column_lineup$', r'^comforting$', r'^cooperative_fellatio$', r'^cooperative_paizuri$', r'^copyright$', r'^costume_switch$', r'^couple$', r'^cousins$', r'^covering_another\'s_eyes$', r'^covering_another\'s_mouth$', r'^covering_mouth$', r'^cowgirl_position$', r'^cross-section$', r'^cuddling$', r'^cum_in_nose$', r'^cum_overflow$', r'^cunnilingus$', r'^cute_$', r'^dark_penis$', r'^deepthroat$', r'^deep_penetration$', r'^disembodied_limb$', r'^disembodied_penis$', r'^doggystyle$', r'^double_handjob$', r'^dressing_another$', r'^dual_persona$', r'^duckling$', r'^duel$', r'^ear_biting$', r'^ejaculating_while_penetrated$', r'^ejaculation$', r'^emotionless_sex$', r'^everyone$', r'^evolutionary_line$', r'^expression_chart$', r'^eye_contact$', r'^face-to-face$', r'^facepalm$', r'^face_to_breasts$', r'^facing_another$', r'^fellatio$', r'^female_child$', r'^femdom$', r'^fff_threesome$', r'^ffm_threesome$', r'^fighting$', r'^finger_biting$', r'^finger_in_another\'s_mouth$', r'^finger_to_another\'s_mouth$', r'^flashback$', r'^flat_chest_grab$', r'^fleeing$', r'^footjob$', r'^foot_worship$', r'^forehead-to-forehead$', r'^french_kiss$', r'^friends$', r'^frilled_swimsuit$', r'^frottage$', r'^full_nelson$', r'^fume$', r'^furry_with_furry$', r'^furry_with_non-furry$', r'^futa_on_male$', r'^futa_with_female$', r'^futa_with_futa$', r'^futa_with_male$', r'^gangbang$', r'^girl_on_top$', r'^girl_sandwich$', r'^glansjob$', r'^glomp$', r'^gloved_handjob$', r'^grabbing$', r'^grabbing_another\'s_ass$', r'^grabbing_another\'s_breast$', r'^grabbing_another\'s_chin$', r'^grabbing_another\'s_hair$', r'^grabbing_from_behind$', r'^greek_clothes$', r'^griffin_$', r'^grinding$', r'^groom$', r'^groping$', r'^group_hug$', r'^group_picture$', r'^group_sex$', r'^guided_breast_grab$', r'^guided_penetration$', r'^guiding_hand$', r'^hairjob$', r'^handjob$', r'^handshake$', r'^hands_on_another\'s_cheeks$', r'^hands_on_another\'s_chest$', r'^hands_on_another\'s_face$', r'^hands_on_another\'s_head$', r'^hands_on_another\'s_hips$', r'^hands_on_another\'s_shoulders$', r'^hands_on_another\'s_thighs$', r'^hands_on_shoulders$', r'^hand_grab$', r'^hand_in_another\'s_hair$', r'^hand_on_another\'s_arm$', r'^hand_on_another\'s_ass$', r'^hand_on_another\'s_back$', r'^hand_on_another\'s_cheek$', r'^hand_on_another\'s_chest$', r'^hand_on_another\'s_chin$', r'^hand_on_another\'s_ear$', r'^hand_on_another\'s_face$', r'^hand_on_another\'s_hand$', r'^hand_on_another\'s_head$', r'^hand_on_another\'s_hip$', r'^hand_on_another\'s_leg$', r'^hand_on_another\'s_neck$', r'^hand_on_another\'s_shoulder$', r'^hand_on_another\'s_stomach$', r'^hand_on_another\'s_thigh$', r'^hand_on_another\'s_waist$', r'^happy_sex$', r'^harem$', r'^headpat$', r'^heads_together$', r'^head_between_breasts$', r'^head_grab$', r'^head_on_another\'s_shoulder$', r'^head_on_chest$', r'^heart_hands_duo$', r'^heckler_$', r'^height_difference$', r'^hetero$', r'^holding_another\'s_arm$', r'^holding_another\'s_foot$', r'^holding_another\'s_hair$', r'^holding_another\'s_leg$', r'^holding_another\'s_wrist$', r'^holding_hair$', r'^holding_hands$', r'^holding_pokemon$', r'^holomyth$', r'^hoop_piercing$', r'^horn_grab$', r'^hug$', r'^hug_from_behind$', r'^humping$', r'^imminent_fellatio$', r'^imminent_kiss$', r'^imminent_penetration$', r'^imminent_vaginal$', r'^implied_fingering$', r'^implied_futanari$', r'^implied_kiss$', r'^in-franchise_crossover$', r'^incest$', r'^infinity$', r'^instant_loss$', r'^internal_cumshot$', r'^interracial$', r'^interspecies$', r'^invisible_man$', r'^in_the_face$', r'^irrumatio$', r'^jealous$', r'^josou_seme$', r'^just_the_tip$', r'^kabedon$', r'^kanshou_$', r'^kiss$', r'^kissing_cheek$', r'^kissing_forehead$', r'^kissing_hand$', r'^kissing_neck$', r'^kissing_penis$', r'^lap_pillow$', r'^leaning_on_person$', r'^left-to-right_manga$', r'^legwear_under_shorts$', r'^leg_between_thighs$', r'^leg_grab$', r'^leg_lock$', r'^licking_another\'s_face$', r'^licking_armpit$', r'^licking_foot$', r'^licking_nipple$', r'^licking_penis$', r'^lifted_by_another$', r'^lifting_another\'s_clothes$', r'^lifting_person$', r'^light_blue_background$', r'^lineup$', r'^locked_arms$', r'^lolidom$', r'^looking_at_another$', r'^looking_at_penis$', r'^lying_on_lap$', r'^lying_on_person$', r'^massage$', r'^matching_outfits$', r'^matching_outfits$', r'^mating_press$', r'^missionary$', r'^misunderstanding$', r'^mixed-sex_bathing$', r'^mixed_bathing$', r'^mmf_threesome$', r'^mmm_threesome$', r'^mod3_\(girls\'_frontline\)$', r'^molestation$', r'^motherly$', r'^mouse$', r'^mtu_virus$', r'^multiple_4koma$', r'^multiple_boys$', r'^multiple_crossover$', r'^multiple_drawing_challenge$', r'^multiple_girls$', r'^multiple_others$', r'^multiple_penises$', r'^multiple_persona$', r'^multiple_riders$', r'^multiple_views$', r'^multitasking$', r'^mutual_hug$', r'^mutual_masturbation$', r'^netorare$', r'^nipple-to-nipple$', r'^noses_touching$', r'^nursing_handjob$', r'^odd_one_out$', r'^onee-loli$', r'^onee-shota$', r'^onii-shota$', r'^on_person$', r'^oral$', r'^orgy$', r'^out_of_frame$', r'^overflow$', r'^paizuri$', r'^paizuri_under_clothes$', r'^penises_touching$', r'^penis_awe$', r'^penis_grab$', r'^penis_on_ass$', r'^penis_on_face$', r'^penis_size_difference$', r'^people$', r'^perpendicular_paizuri$', r'^person_on_head$', r'^phone_screen$', r'^picture_\(object\)$', r'^piggyback$', r'^pikmin_\(creature\)$', r'^pointing_at_another$', r'^pokemon_on_head$', r'^pokemon_on_shoulder$', r'^pokephilia$', r'^pov_crotch$', r'^pov_hands$', r'^prank$', r'^princess_carry$', r'^print_legwear$', r'^prone_bone$', r'^protecting$', r'^pulled_by_another$', r'^pulling_another\'s_clothes$', r'^pushing$', r'^pushing_away$', r'^reach-around$', r'^remembering$', r'^reverse_cowgirl_position$', r'^reverse_suspended_congress$', r'^reverse_upright_straddle$', r'^rhodes_island_logo$', r'^riding_pokemon$', r'^rotational_symmetry$', r'^rough_sex$', r'^sailor_senshi$', r'^same-sex_bathing$', r'^sandwiched$', r'^see-through_swimsuit$', r'^selfcest$', r'^sequential$', r'^sex$', r'^sextuplets$', r'^sexual_coaching$', r'^sex_from_behind$', r'^shared_bathing$', r'^shared_clothes$', r'^shared_earphones$', r'^shared_food$', r'^shared_object_insertion$', r'^shared_scarf$', r'^shared_speech_bubble$', r'^shared_umbrella$', r'^shimaidon_\(sex\)$', r'^shiny_and_normal$', r'^shoulder_carry$', r'^siblings$', r'^side-by-side$', r'^sisters$', r'^sitting_on_bench$', r'^sitting_on_face$', r'^sitting_on_lap$', r'^sitting_on_person$', r'^sitting_on_shoulder$', r'^size_difference$', r'^slapping$', r'^sleeping_on_person$', r'^sleeve_grab$', r'^sling$', r'^solo_focus$', r'^spitroast$', r'^spitting$', r'^spit_take$', r'^spooning$', r'^square_4koma$', r'^squatting_cowgirl_position$', r'^standing_sex$', r'^starter_pokemon_trio$', r'^stealth_sex$', r'^still_life$', r'^straddling$', r'^straddling_paizuri$', r'^strangling$', r'^strap-on$', r'^surprise_kiss$', r'^surrounded_by_penises$', r'^suspended_congress$', r'^symmetrical_docking$', r'^tail_around_leg$', r'^tail_feathers$', r'^take_your_pick$', r'^teacher_and_student$', r'^teamwork$', r'^team_9$', r'^testicle_grab$', r'^testicle_sucking$', r'^thigh_grab$', r'^thigh_sex$', r'^threesome$', r'^time_paradox$', r'^torso_grab$', r'^tribadism$', r'^triplets$', r'^turnaround$', r'^twincest$', r'^twins$', r'^two-footed_footjob$', r'^two-handed_handjob$', r'^ugly_man$', r'^undressing_another$', r'^upright_straddle$', r'^uterus$', r'^vaginal$', r'^variations$', r'^walk-in$', r'^window_shade$', r'^wrestling$', r'^yaoi$', r'^yuri$', r'^:>=$'
     ] 
 
-cache_path = 'cache.json'
-if os.path.exists(cache_path):
-    with open(cache_path, 'r', encoding='utf-8') as f:
-        text_features_dict = json.load(f)
-else:
-    text_features_dict = {}
+text_features_dict = {}
 image_features_cache = {}
 
 def run_example(task_prompt, image, text_input=None):
@@ -281,7 +277,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         clothtag = ', '.join(clothtags[:4])
         labels = [label for label in labels if label not in clothtags]
 
-    if args.peopletag and not ('solo' in labels or persontag == 'focus on one person'):
+    if args.peopletag and (persontag == 'focus on one person' or persontag == 'two persons'):
         people_labels = [label for label in labels if label.strip() and label not in people_labels and label in people_tags]
         peopletags = []
         peopletags = find_best_combined_text(image_features, clothes_labels, 'they are doing: ', 1)
@@ -294,7 +290,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     for label in labels:
         with torch.no_grad():
             logits_per_image = (image_features @ text_features_dict[label].T).item()
-        label_scores.append((label.replace("the image looks ", ""), logits_per_image))
+        label_scores.append((label.replace("the image seems ", ""), logits_per_image))
         
     average_score = sum(score for _, score in label_scores) / len(label_scores)
 
@@ -322,7 +318,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     #with torch.no_grad():
     #    text_features = clip_model.encode_text(text_tensor)
     #    text_features = F.normalize(text_features, dim=-1)
-        final_score = average_score
+    final_score = average_score
   
     return selected_labels, final_score, clothtag, persontag, peopletag
 
@@ -421,8 +417,7 @@ def process_image(image_path, folder_chartag, args):
             print(f"Skipping {tag_file_path} as it was modified within the last week.")
             return None, None, 'skipped'   
     try:
-        #image = resize_image(image_path)
-        image = Image.open(image_path)
+        image = resize_image(image_path)
         if image.mode != "RGB":
             image = image.convert("RGB")
 
@@ -555,7 +550,7 @@ if __name__ == "__main__":
     if args.not_char:
         args.folder_name = True
         
-    clip_labels = [f"the image looks {label}" for label in clip_labels]
+    clip_labels = [f"the image seems {label}" for label in clip_labels]
     for label in clip_labels:
         if label not in text_features_dict:
             text_tensor = longclip.tokenize([label]).to(device)
