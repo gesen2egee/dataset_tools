@@ -43,9 +43,9 @@ def run_main_script_in_venv(args):
         "--drop_chartag" if args.drop_chartag else "",
         "--drop_colortag" if args.drop_colortag else "",
         "--clothtag" if args.clothtag else "",
-        "--not_char" if args.not_char else "",
         "--peopletag" if args.peopletag else "",
         "--not_char" if args.not_char else "",
+        "--debiased" if args.debiased else "",
         f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
         args.directory
     ]
