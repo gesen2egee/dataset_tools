@@ -478,7 +478,7 @@ def process_image(image_path, folder_chartag, args):
             )
         else:
             tags_text =(
-                f"{special_text}, ___{clip_caption[4]}"
+                f"{special_text}, {clip_caption[4]}___"
             )
         with open(tag_file_path, 'w', encoding='utf-8') as f:
             f.write(tags_text.lower()) 
