@@ -471,18 +471,14 @@ def process_image(image_path, folder_chartag, args):
         #    special_text += f", {artisttag}"
         
         if not args.rawdata:           
-            tags_text = (
-                f"accurate, {special_text}, ___{clip_caption[4]}\n"
-                f"{special_text}, ___{clip_caption[3]}\n"
-                f"{special_text}, ___{clip_caption[2]}\n"
-                f"inaccurate, {special_text}, ___{clip_caption[1]}\n" 
-                f"inaccurate, {special_text}, ___{clip_caption[0]}"
+            tags_text = (                
+                f"{special_text}, {clip_caption[4]}___\n"
+                f"accurate, {special_text}, ___{clip_caption[3]}\n"
+                f"inaccurate, {special_text}, ___{clip_caption[0]}" 
             )
         else:
             tags_text =(
-                f"{special_text}, {clip_caption[4]}___\n"
-                f"accurate, {special_text}, ___{clip_caption[3]}\n"
-                f"inaccurate, {special_text}, ___{clip_caption[0]}"          
+                f"{special_text}, ___{clip_caption[4]}\n"
             )
         with open(tag_file_path, 'w', encoding='utf-8') as f:
             f.write(tags_text.lower()) 
