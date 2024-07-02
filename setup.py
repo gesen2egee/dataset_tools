@@ -39,24 +39,25 @@ def install_packages(venv_name='venv'):
         'onnxruntime-gpu==1.17.0',
         'ftfy',
         'dghs-imgutils[gpu]',
-        'timm'
+        'timm',
+        'aesthetic-predictor-v2-5'
     ]
 
     # 安装 PyTorch 和 torchvision
     if platform.system() == 'Windows':
         if sys.version_info[:2] == (3, 11):
-            torch_url = "https://download.pytorch.org/whl/cu121/torch-2.1.2%2Bcu121-cp311-cp311-win_amd64.whl"
-            torchvision_url = "https://download.pytorch.org/whl/cu121/torchvision-0.16.2%2Bcu121-cp311-cp311-win_amd64.whl"
+            torch_url = "https://download.pytorch.org/whl/cu121/torch-2.2.2%2Bcu121-cp311-cp311-win_amd64.whl"
+            torchvision_url = "https://download.pytorch.org/whl/cu121/torchvision-0.17.2%2Bcu121-cp311-cp311-win_amd64.whl"
         elif sys.version_info[:2] == (3, 10):
-            torch_url = "https://download.pytorch.org/whl/cu121/torch-2.1.2%2Bcu121-cp310-cp310-win_amd64.whl"
-            torchvision_url = "https://download.pytorch.org/whl/cu121/torchvision-0.16.2%2Bcu121-cp310-cp310-win_amd64.whl"
+            torch_url = "https://download.pytorch.org/whl/cu121/torch-2.2.2%2Bcu121-cp310-cp310-win_amd64.whl"
+            torchvision_url = "https://download.pytorch.org/whl/cu121/torchvision-0.17.2%2Bcu121-cp310-cp310-win_amd64.whl"
     else:
         if sys.version_info[:2] == (3, 11):
-            torch_url = "https://download.pytorch.org/whl/cpu/torch-2.1.2%2Bcpu-cp311-cp311-linux_x86_64.whl"
-            torchvision_url = "https://download.pytorch.org/whl/cpu/torchvision-0.16.2%2Bcpu-cp311-cp311-linux_x86_64.whl"
+            torch_url = "https://download.pytorch.org/whl/cpu/torch-2.2.2%2Bcpu-cp311-cp311-linux_x86_64.whl"
+            torchvision_url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.2%2Bcpu-cp311-cp311-linux_x86_64.whl"
         elif sys.version_info[:2] == (3, 10):
             torch_url = "https://download.pytorch.org/whl/cpu/torch-2.1.2%2Bcpu-cp310-cp310-linux_x86_64.whl"
-            torchvision_url = "https://download.pytorch.org/whl/cpu/torchvision-0.16.2%2Bcpu-cp310-cp310-linux_x86_64.whl"
+            torchvision_url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.2%2Bcpu-cp310-cp310-linux_x86_64.whl"
 
     if not is_package_installed("torch", activate_command):
         subprocess.run(f"{activate_command}pip install {torch_url}", shell=True, check=True)
@@ -67,11 +68,11 @@ def install_packages(venv_name='venv'):
     # 安装 FlashAttention
     if platform.system() == 'Windows':
         if sys.version_info[:2] == (3, 11):
-            flash_url = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.6/flash_attn-2.5.6+cu122torch2.1.2cxx11abiFALSE-cp311-cp311-win_amd64.whl"
+            flash_url = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.2.2cxx11abiFALSE-cp311-cp311-win_amd64.whl"
         elif sys.version_info[:2] == (3, 10):
-            flash_url = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.6/flash_attn-2.5.6+cu122torch2.1.2cxx11abiFALSE-cp310-cp310-win_amd64.whl"
+            flash_url = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.2.2cxx11abiFALSE-cp310-cp310-win_amd64.whl"
     else:
-        flash_url = "flash-attn==2.5.6"
+        flash_url = "flash-attn==2.5.9.post1"
 
     if not is_package_installed("flash-attn", activate_command):
         subprocess.run(f"{activate_command}pip install {flash_url}", shell=True, check=True)
