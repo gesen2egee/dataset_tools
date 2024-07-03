@@ -2,6 +2,8 @@
 
 自製全自動打標all in one  
 
+需求python 3.10 3.11 windows
+
 整合 florence-2 自然語言、WD14 tagger、clip score (long clip)、aesthetic predictor v2.5美學模型
 
 +自定義打標流程
