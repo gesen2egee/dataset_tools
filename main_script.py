@@ -253,7 +253,11 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     clothtag, persontag, peopletag, custom_keeptag = '', '', '', ''
     long_labels = [label.lower() for label in long_caption.split(", ") if label.strip() and label not in long_labels and '"' not in label and not any(char.isupper() for char in label[1:])]
     lebel_word = " in the image."
-    labels = [label + lebel_word for label in short_caption.split(", ") if label.strip() and label not in labels and not (contains_color(label) and args.drop_colortag)]
+    parent_folder = Path(image_path).parent.name
+    tag_from_folder = ""
+    if args.not_char and "_" in parent_folder and parent_folder.split("_")[0].isdigit():
+        tag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()    
+    labels = [label + lebel_word for label in short_caption.split(", ") if label.strip() and label not in labels and not (contains_color(label) and args.drop_colortag) and label != tag_from_folder]
     preson_labels = ['focus on one person', 'two persons', 'three persons', 'four persons', 'five persons', 'many persons', 'lots of people']
     
     for label in labels + long_labels + preson_labels:
