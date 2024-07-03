@@ -156,7 +156,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
     parent_folder = Path(image_path).parent.name
     if args.folder_name and "_" in parent_folder and parent_folder.split("_")[0].isdigit():
         if not args.not_char:
-            chartag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip()
+            chartag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()
             chartags.add(chartag_from_folder)            
             
     # 處理 boorutag 文件內容
@@ -190,6 +190,8 @@ def generate_special_text(image_path, args, features=None, chars=None):
     # 將 chartags 轉換為列表並隨機打亂
     chartags = list(chartags)
     random.shuffle(chartags)
+    chartag_from_folder = chartag_from_folder + ' face'
+    chartags = [chartag + ' face' for chartag in chartags]  
     if chartag_from_folder and features and "solo" in features:
         return f"{chartag_from_folder}", ', '.join(chartags), boorutag, artisttag
 
