@@ -190,8 +190,8 @@ def generate_special_text(image_path, args, features=None, chars=None):
     # 將 chartags 轉換為列表並隨機打亂
     chartags = list(chartags)
     random.shuffle(chartags)
-    chartag_from_folder = chartag_from_folder + ' face'
-    chartags = [chartag + ' face' for chartag in chartags]  
+    chartag_from_folder = chartag_from_folder + ' appearance'
+    chartags = [chartag + ' appearance' for chartag in chartags]  
     if chartag_from_folder and features and "solo" in features:
         return f"{chartag_from_folder}", ', '.join(chartags), boorutag, artisttag
 
