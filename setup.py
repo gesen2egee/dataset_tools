@@ -3,7 +3,12 @@ import os
 import sys
 import shutil
 import platform
-
+try:
+    import requests
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
+    import requests
+    
 def install_packages(venv_name='venv'):
     def is_package_installed(package_name, activate_command):
         check_command = f"{activate_command}python -m pip show {package_name}"
