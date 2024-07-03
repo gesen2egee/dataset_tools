@@ -14,7 +14,7 @@
 
 py後面可以放args (中間要空格)
 
---folder_name 前置角色名 "aaa," OR "two preson include aaa and bbb" ... ___
+--folder_name 前置角色名 "aaa appearance," OR "two preson include aaa appearance and bbb appearance" ... ___
 
 --not_char 如果前置是概念不是角色 "aaa in the image, " ... ___
 
@@ -32,11 +32,15 @@ py後面可以放args (中間要空格)
 
 --rawdata 只打一行 也許正則圖這樣做比較好 不確定沒測試
 
---debiased 設置clip score上限減少florence偏差，如果發現florence很多作品名、角色幻覺可以用 不然不需要 會刪掉一些正常的標 
+--debiased 已棄用 已經用更好方式去除專有名詞和ocr 
+
+設置clip score上限減少florence偏差，如果發現florence很多作品名、角色幻覺可以用 不然不需要 會刪掉一些正常的標 
 
 --custom_keeptag="字串類似is doing" 自定義前置，實驗性很慢效果差、不要用
 
 --upgrade 升級腳本，有需要才用
+
+--drop_chartag 自動刪除角色特徵標 如果用wildcard應該是不需要
 
 
 打出來格式是三行wildcard，___ 之前是前置
@@ -71,5 +75,8 @@ inaccurate, 前置, ___更少的標
 角色設置 python caption.py "資料集位置" --folder_name --clothtag --peoplotag --drop_colortag
 
 概念設置 python caption.py "資料集位置" --not_char
+
+
+如果有訓練效果反饋 
 
 
