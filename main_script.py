@@ -105,13 +105,13 @@ def run_example(task_prompt, image, text_input=None):
 def get_aesthetic_tag(image):
     def aesthetic_tag(score):
         if score >= 6:
-            return "aesthetic"
+            return "aesthetic."
         elif score >= 5:
             return ""
         elif score >= 4.5:
-            return "bad image"
+            return "bad image."
         else:
-            return "garbage"
+            return "garbage."
     pixel_values = (
         aes_preprocessor(images=image, return_tensors="pt")
         .pixel_values.to(torch.bfloat16)
@@ -251,7 +251,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
 
     labels, long_labels, clothes_labels, people_labels = [], [], [], []
     clothtag, persontag, peopletag, custom_keeptag = '', '', '', ''
-    long_labels = [label for label in long_caption.split(", ") if label.strip() and label not in long_labels]
+    long_labels = [label.lower() for label in long_caption.split(", ") if label.strip() and label not in long_labels and '"' not in label and not any(char.isupper() for char in label[1:])]
     lebel_word = " in the image."
     labels = [label + lebel_word for label in short_caption.split(", ") if label.strip() and label not in labels and not (contains_color(label) and args.drop_colortag)]
     preson_labels = ['focus on one person', 'two persons', 'three persons', 'four persons', 'five persons', 'many persons', 'lots of people']
@@ -472,15 +472,17 @@ def process_image(image_path, folder_chartag, args):
         #if artisttag:
         #    special_text += f", {artisttag}"
         
+        special_text = ', '.join([text.strip() for text in special_text.split(',') if text.strip()])
+        
         if not args.rawdata:           
             tags_text = (                
-                f"{special_text}, {clip_caption[4]}___\n"
+                f"{special_text}, {clip_caption[4]}. ___\n"
                 f"accurate, {special_text}, ___{clip_caption[3]}\n"
                 f"inaccurate, {special_text}, ___{clip_caption[0]}" 
             )
         else:
             tags_text =(
-                f"{special_text}, {clip_caption[4]}___"
+                f"{special_text}, {clip_caption[4]}. ___"
             )
         with open(tag_file_path, 'w', encoding='utf-8') as f:
             f.write(tags_text.lower()) 
@@ -549,9 +551,9 @@ def find_and_process_images(directory, args):
             if relative_score >= 0.4:
                 accuracy_tag = ""
             elif relative_score >= 0.2:
-                accuracy_tag = "low accuracy"
+                accuracy_tag = "low accuracy."
             else:
-                accuracy_tag = "mess"
+                accuracy_tag = "mess."
             
             tag_file_path = Path(image_path).with_suffix('').with_suffix('.txt')
             if tag_file_path.exists():
