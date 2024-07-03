@@ -297,7 +297,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     if args.peopletag and (persontag == 'focus on one person' or persontag == 'two persons'):
         people_labels = [label for label in labels if label.strip() and label not in people_labels and label in people_tags]
         peopletags = []
-        peopletags = find_best_combined_text(image_features, clothes_labels, 'they are doing: ', 1)
+        peopletags = find_best_combined_text(image_features, people_labels, 'they are doing: ', 1)
         peopletag = ', '.join(peopletags[:2])
         labels = [label for label in labels if label.replace(lebel_word, "") not in peopletags]
 
