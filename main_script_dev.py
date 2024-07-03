@@ -107,7 +107,7 @@ def get_aesthetic_tag(image):
         if score >= 6:
             return "aesthetic."
         elif score >= 5:
-            return ""
+            return "okay."
         elif score >= 4.5:
             return "bad."
         else:
@@ -191,7 +191,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
     chartags = list(chartags)
     random.shuffle(chartags)
     chartag_from_folder = chartag_from_folder + ' appearance'
-    chartags = [chartag + ' appearance' for chartag in chartags]  
+    #chartags = [chartag + ' appearance' for chartag in chartags]  
     if chartag_from_folder and features and ("solo" in features or "solo_focus" in features):
         return 'focus on ' if "solo_focus" in features else '' + f"one person {chartag_from_folder}", ', '.join(chartags), boorutag, artisttag
 
@@ -277,7 +277,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     clip_scores.sort(key=lambda x: x[1], reverse=True)
     top_clip_labels = [clip_scores[0][0], clip_scores[1][0], clip_scores[3][0]] 
 
-    if 'solo' not in labels and 'solo focus' not in labels:
+    if 'solo' not in short_caption:
         preson_scores = []
         for label in preson_labels:
             with torch.no_grad():
@@ -286,8 +286,6 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         
         preson_scores.sort(key=lambda x: x[1], reverse=True)
         persontag = preson_scores[0][0]
-        if persontag != 'focus on one person':
-            labels = []
 
     if args.clothtag and ("solo" in labels or "solo focus" in labels or persontag == 'focus on one person'):
         clothes_labels = [label for label in short_caption.split(", ") if label.strip() and label not in clothes_labels and label in clothing_tags]
@@ -482,9 +480,9 @@ def process_image(image_path, folder_chartag, args):
         
         if not args.rawdata:           
             tags_text = (                
-                f"{special_text}, {clip_caption[4]}. ___\n"
-                f"accurate, {special_text}, ___{clip_caption[3]}\n"
-                f"inaccurate, {special_text}, ___{clip_caption[0]}" 
+                f"inaccurate, ___{special_text}, {clip_caption[4]}\n"
+                f"baseline, {special_text}, ___{clip_caption[3]}\n"
+                f"accurate, {special_text}, {clip_caption[0]}. ___" 
             )
         else:
             tags_text =(
@@ -566,13 +564,7 @@ def find_and_process_images(directory, args):
                 with open(tag_file_path, 'r', encoding='utf-8') as file:
                     content = file.read()
                 if accuracy_tag:
-                    content = content.replace('___', f'{accuracy_tag}, ___')
-                    content.replace('inaccurate', 'inaccu___rate')
-                    if accuracy_tag == "low accuracy":
-                        content.replace('more accurate', '').replace('accurate', '')
-                    if accuracy_tag == "mess":
-                        content.replace('accurate', 'inaccurate')
-                    content.replace('inaccu___rate', 'inaccurate')    
+                    content = content.replace('___', f'{accuracy_tag}, ___') 
                     # 将修改后的内容写回文件
                     with open(tag_file_path, 'w', encoding='utf-8') as file:
                         file.write(content)
