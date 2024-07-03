@@ -277,7 +277,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     clip_scores.sort(key=lambda x: x[1], reverse=True)
     top_clip_labels = [clip_scores[0][0], clip_scores[1][0], clip_scores[3][0]] 
 
-    if 'solo' not in labels or 'solo focus' not in labels:
+    if 'solo' not in labels and 'solo focus' not in labels:
         preson_scores = []
         for label in preson_labels:
             with torch.no_grad():
