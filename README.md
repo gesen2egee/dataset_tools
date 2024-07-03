@@ -67,7 +67,9 @@ inaccurate, 前置, ___更少的標
 
 
 推薦
+
 角色設置 python caption.py "資料集位置" --folder_name --clothtag --peoplotag --drop_colortag
+
 概念設置 python caption.py "資料集位置" --not_char
 
 
