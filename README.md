@@ -9,7 +9,9 @@
 +自定義打標流程
 
 
-直接抓caption.py下來 python caption.py "資料集位置" 
+直接抓caption.py下來 (不要用git clone)
+
+python caption.py "資料集位置" 
 
 就可以跑了
 
