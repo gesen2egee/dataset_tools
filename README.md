@@ -76,6 +76,8 @@ inaccurate, 前置, ___更少的標
 
 概念設置 python caption.py "資料集位置" --not_char
 
+kohya-ss --enable_wildcard --keep_tokens_separator="__" --network_train_unet_only 洗牌 
+
 
 如果有訓練效果反饋或有什麼架構的微調建議再跟我說
 
