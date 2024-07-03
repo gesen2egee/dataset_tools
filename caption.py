@@ -5,10 +5,10 @@ import argparse
 import sys
 def install_and_import(package):
     try:
-        __import__(package)
+        import (package)
     except ImportError:
         subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
-        __import__(package)
+        import (package)
 
 install_and_import("requests")
 
