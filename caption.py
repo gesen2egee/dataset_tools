@@ -3,14 +3,12 @@ import os
 import platform
 import argparse
 import sys
-def install_and_import(package):
-    try:
-        import (package)
-    except ImportError:
-        subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
-        import (package)
+try:
+    import requests
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
+    import requests
 
-install_and_import("requests")
 
 def download_file(url, filename):
     try:
