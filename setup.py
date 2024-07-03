@@ -3,8 +3,6 @@ import os
 import sys
 import shutil
 import platform
-subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
-import requests
 
 def install_packages(venv_name='venv'):
     def is_package_installed(package_name, activate_command):
@@ -41,7 +39,8 @@ def install_packages(venv_name='venv'):
         'ftfy',
         'dghs-imgutils[gpu]',
         'timm',
-        'aesthetic-predictor-v2-5'
+        'aesthetic-predictor-v2-5',
+        'requests'
     ]
 
     # 安装 PyTorch 和 torchvision
