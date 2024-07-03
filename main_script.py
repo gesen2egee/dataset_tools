@@ -31,13 +31,14 @@ from aesthetic_predictor_v2_5 import convert_v2_5_from_siglip
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_id = 'microsoft/Florence-2-large'
-model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True).eval().to(device).half()
-processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True, cache_dir="./cache").eval().to(device).half()
+processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, cache_dir="./cache")
 p = inflect.engine()
 clip_model, clip_preprocess = longclip.load("./checkpoints/Long-ViT-L-14-GmP-ft-state_dict.pt", device=device)
 aes_model, aes_preprocessor = convert_v2_5_from_siglip(
     low_cpu_mem_usage=True,
     trust_remote_code=True,
+    cache_dir="./cache",
 )
 aes_model = aes_model.to(torch.bfloat16).to(device)
 
@@ -55,7 +56,7 @@ clip_labels = [
 
 people_tags = [
     r'^1girl$', r'^1boy$', r'^69$', r'^absolutely_everyone$', r'^after_kiss$', r'^age_comparison$', r'^age_difference$', r'^age_progression$', r'^angel_and_devil$', r'^anilingus$', r'^ankle_grab$', r'^anti-aircraft$', r'^armpit_sex$', r'^arms_around_neck$', r'^arms_around_waist$', r'^arm_around_back$', r'^arm_around_neck$', r'^arm_around_shoulder$', r'^arm_around_waist$', r'^arm_held_back$', r'^arm_hug$', r'^ass-to-ass$', r'^asymmetrical_docking$', r'^back-to-back$', r'^band$', r'^behind_another$', r'^black_vs_white$', r'^bound_together$', r'^boy_on_top$', r'^boy_sandwich$', r'^breastfeeding$', r'^breasts_on_head$', r'^breast_envy$', r'^grabbing_another\'s_breast$', r'^breast_smother$', r'^breast_sucking$', r'^buttjob$', r'^caressing_testicles$', r'^carrying_person$', r'^chart$', r'^chasing$', r'^cheating_\(relationship\)$', r'^cheek-to-cheek$', r'^chikan$', r'^child_carry$', r'^child_on_child$', r'^circle_formation$', r'^clog_sandals$', r'^clone$', r'^clothed_female_nude_female$', r'^clothed_female_nude_male$', r'^clothed_male_nude_female$', r'^clothed_sex$', r'^coffee_cup$', r'^collage$', r'^colored_text$', r'^column_lineup$', r'^comforting$', r'^cooperative_fellatio$', r'^cooperative_paizuri$', r'^copyright$', r'^costume_switch$', r'^couple$', r'^cousins$', r'^covering_another\'s_eyes$', r'^covering_another\'s_mouth$', r'^covering_mouth$', r'^cowgirl_position$', r'^cross-section$', r'^cuddling$', r'^cum_in_nose$', r'^cum_overflow$', r'^cunnilingus$', r'^cute_$', r'^dark_penis$', r'^deepthroat$', r'^deep_penetration$', r'^disembodied_limb$', r'^disembodied_penis$', r'^doggystyle$', r'^double_handjob$', r'^dressing_another$', r'^dual_persona$', r'^duckling$', r'^duel$', r'^ear_biting$', r'^ejaculating_while_penetrated$', r'^ejaculation$', r'^emotionless_sex$', r'^everyone$', r'^evolutionary_line$', r'^expression_chart$', r'^eye_contact$', r'^face-to-face$', r'^facepalm$', r'^face_to_breasts$', r'^facing_another$', r'^fellatio$', r'^female_child$', r'^femdom$', r'^fff_threesome$', r'^ffm_threesome$', r'^fighting$', r'^finger_biting$', r'^finger_in_another\'s_mouth$', r'^finger_to_another\'s_mouth$', r'^flashback$', r'^flat_chest_grab$', r'^fleeing$', r'^footjob$', r'^foot_worship$', r'^forehead-to-forehead$', r'^french_kiss$', r'^friends$', r'^frilled_swimsuit$', r'^frottage$', r'^full_nelson$', r'^fume$', r'^furry_with_furry$', r'^furry_with_non-furry$', r'^futa_on_male$', r'^futa_with_female$', r'^futa_with_futa$', r'^futa_with_male$', r'^gangbang$', r'^girl_on_top$', r'^girl_sandwich$', r'^glansjob$', r'^glomp$', r'^gloved_handjob$', r'^grabbing$', r'^grabbing_another\'s_ass$', r'^grabbing_another\'s_breast$', r'^grabbing_another\'s_chin$', r'^grabbing_another\'s_hair$', r'^grabbing_from_behind$', r'^greek_clothes$', r'^griffin_$', r'^grinding$', r'^groom$', r'^groping$', r'^group_hug$', r'^group_picture$', r'^group_sex$', r'^guided_breast_grab$', r'^guided_penetration$', r'^guiding_hand$', r'^hairjob$', r'^handjob$', r'^handshake$', r'^hands_on_another\'s_cheeks$', r'^hands_on_another\'s_chest$', r'^hands_on_another\'s_face$', r'^hands_on_another\'s_head$', r'^hands_on_another\'s_hips$', r'^hands_on_another\'s_shoulders$', r'^hands_on_another\'s_thighs$', r'^hands_on_shoulders$', r'^hand_grab$', r'^hand_in_another\'s_hair$', r'^hand_on_another\'s_arm$', r'^hand_on_another\'s_ass$', r'^hand_on_another\'s_back$', r'^hand_on_another\'s_cheek$', r'^hand_on_another\'s_chest$', r'^hand_on_another\'s_chin$', r'^hand_on_another\'s_ear$', r'^hand_on_another\'s_face$', r'^hand_on_another\'s_hand$', r'^hand_on_another\'s_head$', r'^hand_on_another\'s_hip$', r'^hand_on_another\'s_leg$', r'^hand_on_another\'s_neck$', r'^hand_on_another\'s_shoulder$', r'^hand_on_another\'s_stomach$', r'^hand_on_another\'s_thigh$', r'^hand_on_another\'s_waist$', r'^happy_sex$', r'^harem$', r'^headpat$', r'^heads_together$', r'^head_between_breasts$', r'^head_grab$', r'^head_on_another\'s_shoulder$', r'^head_on_chest$', r'^heart_hands_duo$', r'^heckler_$', r'^height_difference$', r'^hetero$', r'^holding_another\'s_arm$', r'^holding_another\'s_foot$', r'^holding_another\'s_hair$', r'^holding_another\'s_leg$', r'^holding_another\'s_wrist$', r'^holding_hair$', r'^holding_hands$', r'^holding_pokemon$', r'^holomyth$', r'^hoop_piercing$', r'^horn_grab$', r'^hug$', r'^hug_from_behind$', r'^humping$', r'^imminent_fellatio$', r'^imminent_kiss$', r'^imminent_penetration$', r'^imminent_vaginal$', r'^implied_fingering$', r'^implied_futanari$', r'^implied_kiss$', r'^in-franchise_crossover$', r'^incest$', r'^infinity$', r'^instant_loss$', r'^internal_cumshot$', r'^interracial$', r'^interspecies$', r'^invisible_man$', r'^in_the_face$', r'^irrumatio$', r'^jealous$', r'^josou_seme$', r'^just_the_tip$', r'^kabedon$', r'^kanshou_$', r'^kiss$', r'^kissing_cheek$', r'^kissing_forehead$', r'^kissing_hand$', r'^kissing_neck$', r'^kissing_penis$', r'^lap_pillow$', r'^leaning_on_person$', r'^left-to-right_manga$', r'^legwear_under_shorts$', r'^leg_between_thighs$', r'^leg_grab$', r'^leg_lock$', r'^licking_another\'s_face$', r'^licking_armpit$', r'^licking_foot$', r'^licking_nipple$', r'^licking_penis$', r'^lifted_by_another$', r'^lifting_another\'s_clothes$', r'^lifting_person$', r'^light_blue_background$', r'^lineup$', r'^locked_arms$', r'^lolidom$', r'^looking_at_another$', r'^looking_at_penis$', r'^lying_on_lap$', r'^lying_on_person$', r'^massage$', r'^matching_outfits$', r'^matching_outfits$', r'^mating_press$', r'^missionary$', r'^misunderstanding$', r'^mixed-sex_bathing$', r'^mixed_bathing$', r'^mmf_threesome$', r'^mmm_threesome$', r'^mod3_\(girls\'_frontline\)$', r'^molestation$', r'^motherly$', r'^mouse$', r'^mtu_virus$', r'^multiple_4koma$', r'^multiple_boys$', r'^multiple_crossover$', r'^multiple_drawing_challenge$', r'^multiple_girls$', r'^multiple_others$', r'^multiple_penises$', r'^multiple_persona$', r'^multiple_riders$', r'^multiple_views$', r'^multitasking$', r'^mutual_hug$', r'^mutual_masturbation$', r'^netorare$', r'^nipple-to-nipple$', r'^noses_touching$', r'^nursing_handjob$', r'^odd_one_out$', r'^onee-loli$', r'^onee-shota$', r'^onii-shota$', r'^on_person$', r'^oral$', r'^orgy$', r'^out_of_frame$', r'^overflow$', r'^paizuri$', r'^paizuri_under_clothes$', r'^penises_touching$', r'^penis_awe$', r'^penis_grab$', r'^penis_on_ass$', r'^penis_on_face$', r'^penis_size_difference$', r'^people$', r'^perpendicular_paizuri$', r'^person_on_head$', r'^phone_screen$', r'^picture_\(object\)$', r'^piggyback$', r'^pikmin_\(creature\)$', r'^pointing_at_another$', r'^pokemon_on_head$', r'^pokemon_on_shoulder$', r'^pokephilia$', r'^pov_crotch$', r'^pov_hands$', r'^prank$', r'^princess_carry$', r'^print_legwear$', r'^prone_bone$', r'^protecting$', r'^pulled_by_another$', r'^pulling_another\'s_clothes$', r'^pushing$', r'^pushing_away$', r'^reach-around$', r'^remembering$', r'^reverse_cowgirl_position$', r'^reverse_suspended_congress$', r'^reverse_upright_straddle$', r'^rhodes_island_logo$', r'^riding_pokemon$', r'^rotational_symmetry$', r'^rough_sex$', r'^sailor_senshi$', r'^same-sex_bathing$', r'^sandwiched$', r'^see-through_swimsuit$', r'^selfcest$', r'^sequential$', r'^sex$', r'^sextuplets$', r'^sexual_coaching$', r'^sex_from_behind$', r'^shared_bathing$', r'^shared_clothes$', r'^shared_earphones$', r'^shared_food$', r'^shared_object_insertion$', r'^shared_scarf$', r'^shared_speech_bubble$', r'^shared_umbrella$', r'^shimaidon_\(sex\)$', r'^shiny_and_normal$', r'^shoulder_carry$', r'^siblings$', r'^side-by-side$', r'^sisters$', r'^sitting_on_bench$', r'^sitting_on_face$', r'^sitting_on_lap$', r'^sitting_on_person$', r'^sitting_on_shoulder$', r'^size_difference$', r'^slapping$', r'^sleeping_on_person$', r'^sleeve_grab$', r'^sling$', r'^solo_focus$', r'^spitroast$', r'^spitting$', r'^spit_take$', r'^spooning$', r'^square_4koma$', r'^squatting_cowgirl_position$', r'^standing_sex$', r'^starter_pokemon_trio$', r'^stealth_sex$', r'^still_life$', r'^straddling$', r'^straddling_paizuri$', r'^strangling$', r'^strap-on$', r'^surprise_kiss$', r'^surrounded_by_penises$', r'^suspended_congress$', r'^symmetrical_docking$', r'^tail_around_leg$', r'^tail_feathers$', r'^take_your_pick$', r'^teacher_and_student$', r'^teamwork$', r'^team_9$', r'^testicle_grab$', r'^testicle_sucking$', r'^thigh_grab$', r'^thigh_sex$', r'^threesome$', r'^time_paradox$', r'^torso_grab$', r'^tribadism$', r'^triplets$', r'^turnaround$', r'^twincest$', r'^twins$', r'^two-footed_footjob$', r'^two-handed_handjob$', r'^ugly_man$', r'^undressing_another$', r'^upright_straddle$', r'^uterus$', r'^vaginal$', r'^variations$', r'^walk-in$', r'^window_shade$', r'^wrestling$', r'^yaoi$', r'^yuri$', r'^:>=$'
-    ] 
+    ]
 
 text_features_dict = {}
 image_features_cache = {}
@@ -66,10 +67,10 @@ def run_example(task_prompt, image, text_input=None):
     else:
         prompt = task_prompt + text_input
     inputs = processor(text=prompt, images=image, return_tensors="pt").to(device)
-    
+
     # 將inputs轉換為fp16
     inputs["pixel_values"] = inputs["pixel_values"].half()
-    
+
     with torch.cuda.amp.autocast():
         generated_ids = model.generate(
             input_ids=inputs["input_ids"],
@@ -77,14 +78,14 @@ def run_example(task_prompt, image, text_input=None):
             max_new_tokens=1024,
             num_beams=3
         )
-        
+
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
     parsed_answer = processor.post_process_generation(
         generated_text,
         task=task_prompt,
         image_size=(image.width, image.height)
     )
-    
+
     if task_prompt == '<DENSE_REGION_CAPTION>':
         dense_labels = parsed_answer['<DENSE_REGION_CAPTION>']['labels']
         caption = ', '.join([label for label in dense_labels if label.count(' ') > 1])
@@ -157,8 +158,8 @@ def generate_special_text(image_path, args, features=None, chars=None):
     if args.folder_name and "_" in parent_folder and parent_folder.split("_")[0].isdigit():
         if not args.not_char:
             chartag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()
-            chartags.add(chartag_from_folder)            
-            
+            chartags.add(chartag_from_folder)
+
     # 處理 boorutag 文件內容
     if boorutag_path:
         try:
@@ -175,7 +176,7 @@ def generate_special_text(image_path, args, features=None, chars=None):
                     boorutag = lines[18].strip()
                     boorutag_tags = drop_overlap_tags(boorutag.split(', '))
                     boorutag_tags_cleaned = [tag for tag in boorutag_tags if tag.replace(' ', '_') not in features.keys()]
-                    boorutag = ', ' + ', '.join(boorutag_tags_cleaned)                
+                    boorutag = ', ' + ', '.join(boorutag_tags_cleaned)
         except Exception as e:
             # 讀取文件或處理過程中發生錯誤
             pass
@@ -191,19 +192,19 @@ def generate_special_text(image_path, args, features=None, chars=None):
     chartags = list(chartags)
     random.shuffle(chartags)
     chartag_from_folder = chartag_from_folder + ' appearance'
-    chartags = [chartag + ' appearance' for chartag in chartags]  
+    chartags = [chartag + ' appearance' for chartag in chartags]
     if chartag_from_folder and features and "solo" in features:
         return f"{chartag_from_folder}", ', '.join(chartags), boorutag, artisttag
 
     if len(chartags) > 3:
         chartags = []
-    
+
     if not chartag_from_folder and features and "solo" in features:
         return f"{' '.join(chartags)}" if chartags else f"", ', '.join(chartags), boorutag, artisttag
 
     return f'{"include " if chartags else ""}{" and ".join(chartags)}', ', '.join(chartags), boorutag, artisttag
-    
-def calculate_best_labels(image, short_caption, long_caption, image_path): 
+
+def calculate_best_labels(image, short_caption, long_caption, image_path):
     def contains_color(tag: str) -> bool:
         colors = {'red', 'orange', 'yellow', 'green', 'blue', 'aqua', 'purple', 'brown', 'pink', 'black', 'white', 'grey', 'dark ', 'light ', 'blonde'}
         return any(color in tag for color in colors)
@@ -247,7 +248,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     image_tensor = clip_preprocess(image).unsqueeze(0).to(device)
     with torch.no_grad():
         image_features = clip_model.encode_image(image_tensor)
-        image_features = F.normalize(image_features, dim=-1) 
+        image_features = F.normalize(image_features, dim=-1)
 
     labels, long_labels, clothes_labels, people_labels = [], [], [], []
     clothtag, persontag, peopletag, custom_keeptag = '', '', '', ''
@@ -256,10 +257,10 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     parent_folder = Path(image_path).parent.name
     tag_from_folder = ""
     if args.not_char and "_" in parent_folder and parent_folder.split("_")[0].isdigit():
-        tag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()    
+        tag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()
     labels = [label + lebel_word for label in short_caption.split(", ") if label.strip() and label not in labels and not (contains_color(label) and args.drop_colortag) and label != tag_from_folder]
     preson_labels = ['focus on one person', 'two persons', 'three persons', 'four persons', 'five persons', 'many persons', 'lots of people']
-    
+
     for label in labels + long_labels + preson_labels:
         if label not in text_features_dict:
             text_tensor = longclip.tokenize([label]).to(device)
@@ -273,9 +274,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         with torch.no_grad():
             logits_per_image = (image_features @ text_features_dict[label].T).item()
             clip_scores.append((label, logits_per_image))
-    
+
     clip_scores.sort(key=lambda x: x[1], reverse=True)
-    top_clip_labels = [clip_scores[0][0], clip_scores[1][0], clip_scores[3][0]] 
+    top_clip_labels = [clip_scores[0][0], clip_scores[1][0], clip_scores[3][0]]
 
     if 'solo' not in labels:
         preson_scores = []
@@ -283,9 +284,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             with torch.no_grad():
                 logits_per_image = (image_features @ text_features_dict[label].T).item()
                 preson_scores.append((label, logits_per_image))
-        
+
         preson_scores.sort(key=lambda x: x[1], reverse=True)
-        persontag = preson_scores[0][0]    
+        persontag = preson_scores[0][0]
 
     if args.clothtag and ('solo' in labels or persontag == 'focus on one person'):
         clothes_labels = [label for label in short_caption.split(", ") if label.strip() and label not in clothes_labels and label in clothing_tags]
@@ -306,7 +307,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         custom_keeptags = find_best_combined_text(image_features, labels, f'{args.custom_keeptag} ', 2)
         print(f"{args.custom_keeptag} {custom_keeptags}")
         custom_keeptag = ', '.join(custom_keeptags[:4])
-        labels = [label for label in labels if label.replace(lebel_word, "") not in custom_keeptags]         
+        labels = [label for label in labels if label.replace(lebel_word, "") not in custom_keeptags]
 
     labels = list(set(labels + top_clip_labels + long_labels))
     label_scores = []
@@ -315,7 +316,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         with torch.no_grad():
             logits_per_image = (image_features @ text_features_dict[label].T).item()
         label_scores.append((label.replace("the image seems ", "").replace(lebel_word, ""), logits_per_image))
-        
+
     average_score = sum(score for _, score in label_scores) / len(label_scores)
 
     if args.debiased:
@@ -325,9 +326,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 filtered_label_scores.append(item)
             else:
                 print(f"Discarding label: {item[0]}, score: {item[1] / average_score}")
-        label_scores = filtered_label_scores    
+        label_scores = filtered_label_scores
         average_score = sum(score for _, score in label_scores) / len(label_scores)
-    
+
     label_scores.sort(key=lambda x: x[1], reverse=True)
     thresholds = [0.2, 0.2, 0.6, 0.6, 1.0]
     selected_labels = [""] * 5
@@ -337,13 +338,13 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         index = int(threshold * total_labels)
         if index <= total_labels:
             selected_labels[i] = ", ".join([label for label, _ in label_scores[:index]])
-        
+
     #text_tensor = longclip.tokenize([f'{persontag}, {clothtag}, {selected_labels[4]}']).to(device)
     #with torch.no_grad():
     #    text_features = clip_model.encode_text(text_tensor)
     #    text_features = F.normalize(text_features, dim=-1)
     final_score = average_score
-  
+
     return selected_labels, final_score, clothtag, persontag, peopletag, custom_keeptag
 
 def build_folder_chartag(text, folder_chartag):
@@ -354,14 +355,14 @@ def build_folder_chartag(text, folder_chartag):
     """
     tags = [tag.strip() for tag in text.split(',')]
     folder_chartag = {} if folder_chartag is None else folder_chartag
-    
+
     for tag in tags:
         if tag in chartags:
             if tag in folder_chartag:
                 folder_chartag[tag] += 1
             else:
                 folder_chartag[tag] = 1
-                
+
     return folder_chartag
 
 def process_image(image_path, folder_chartag, args):
@@ -387,20 +388,20 @@ def process_image(image_path, folder_chartag, args):
     def process_features(features: dict) -> (dict, str):
         """
         處理features字典，移除指定模式的鍵值對並生成keep_tags字串。
-        
+
         參數:
         features (dict): 包含特徵的字典。
 
         返回:
         (dict, str): 返回處理後的features字典和keep_tags字串。
-        """        
+        """
         patterns_to_keep = [
-            r'^anime.*$', r'^monochrome$', r'^.*background$', r'^comic$', r'^greyscale$', r'^sketch$' 
-            r'^.*censor.*$', r'^.*_name$', r'^signature$', r'^.*_username$', r'^.*text.*$', 
-            r'^.*_bubble$', r'^multiple_views$', r'^.*blurry.*$', r'^.*koma$', r'^watermark$', 
-            r'^traditional_media$', r'^parody$', r'^.*cover$', r'^.*_theme$', r'^.*realistic$', 
-            r'^oekaki$', r'^3d$', r'^.*chart$', r'^letterboxed$', r'^variations$', r'^.*mosaic.*$', 
-            r'^omake$', r'^column.*$', r'^.*_(medium)$', r'^manga$', r'^lineart$', r'^.*logo$',             
+            r'^anime.*$', r'^monochrome$', r'^.*background$', r'^comic$', r'^greyscale$', r'^sketch$'
+            r'^.*censor.*$', r'^.*_name$', r'^signature$', r'^.*_username$', r'^.*text.*$',
+            r'^.*_bubble$', r'^multiple_views$', r'^.*blurry.*$', r'^.*koma$', r'^watermark$',
+            r'^traditional_media$', r'^parody$', r'^.*cover$', r'^.*_theme$', r'^.*realistic$',
+            r'^oekaki$', r'^3d$', r'^.*chart$', r'^letterboxed$', r'^variations$', r'^.*mosaic.*$',
+            r'^omake$', r'^column.*$', r'^.*_(medium)$', r'^manga$', r'^lineart$', r'^.*logo$',
             #r'^(from_side|from_behind|from_above|from_below)$', r'^(close_up|dutch_angle|downblouse|downpants|pantyshot|upskirt|atmospheric_perspective|fisheye|panorama|perspective|pov|rotated|sideways|upside_down|vanishing_point|straight-on)$', r'^(face|cowboy_shot|portrait|upper_body|lower_body|feet_out_of_frame|full_body|wide_shot|very_wide_shot|cut_in|cropped_legs|head_out_of_frame|cropped_torso|cropped_arms|cropped_shoulders|profile|group_profile)$', r'^(armpit_focus|ass_focus|back_focus|breast_focus|eye_focus|foot_focus|hand_focus|hip_focus|navel_focus|pectoral_focus|thigh_focus|soft_focus|solo_focus)$'
         ]
         keep_tags_set = set()
@@ -416,15 +417,15 @@ def process_image(image_path, folder_chartag, args):
                 if regex.match(key):
                     keep_tags_set.add(key.replace('_', ' '))
                     keys_to_delete.append(key)
-        
+
         for key in keys_to_delete:
             if key in features:
                 del features[key]
-        
+
         keep_tags = ', '.join(keep_tags_set).rstrip(', ')
-        
+
         return features, keep_tags
-    
+
     tag_file_path = Path(image_path).with_suffix('').with_suffix('.txt')
 
     # 檢查文件最後修改時間，如果在一周內則略過
@@ -432,7 +433,7 @@ def process_image(image_path, folder_chartag, args):
         last_modified_time = datetime.fromtimestamp(tag_file_path.stat().st_mtime)
         if datetime.now() - last_modified_time < timedelta(days=args.continue_caption):
             print(f"Skipping {tag_file_path} as it was modified within the last week.")
-            return None, None, 'skipped'   
+            return None, None, 'skipped'
     try:
         image = resize_image(image_path)
         if image.mode != "RGB":
@@ -446,11 +447,11 @@ def process_image(image_path, folder_chartag, args):
         special_text, chartags, boorutag, artisttag = generate_special_text(image_path, args, features, chars)
         ratingtag = max(rating, key=rating.get)
         wd14_caption = wd14_caption + ', ' + boorutag
-        more_detailed_caption = run_example('<MORE_DETAILED_CAPTION>', image) 
+        more_detailed_caption = run_example('<MORE_DETAILED_CAPTION>', image)
         clip_caption = []
         clip_caption, final_score, clothtag, persontag, peopletag, custom_keeptag = calculate_best_labels(image, wd14_caption, more_detailed_caption, image_path)
         aestag = get_aesthetic_tag(image)
-        folder_chartag = build_folder_chartag(clip_caption[4], folder_chartag) 
+        folder_chartag = build_folder_chartag(clip_caption[4], folder_chartag)
         if persontag:
             boygirl_tags = {tag for tag in clip_caption[4] if tag in {'multiple girls', '1girl', 'multiple boys', '1boy'}}
             for boygirl_tag in boygirl_tags:
@@ -460,7 +461,7 @@ def process_image(image_path, folder_chartag, args):
         if args.not_char:
             parent_folder = Path(image_path).parent.name
             concept_tag = f"{parent_folder.split('_')[1].replace('_', ' ').strip()} in the image, "
-            special_text = f"{concept_tag}, " + special_text 
+            special_text = f"{concept_tag}, " + special_text
         if keeptag:
             special_text = f"{keeptag}, " + special_text
         if clothtag:
@@ -475,21 +476,21 @@ def process_image(image_path, folder_chartag, args):
             special_text += f", rating:{ratingtag}"
         #if artisttag:
         #    special_text += f", {artisttag}"
-        
+
         special_text = ', '.join([text.strip() for text in special_text.split(',') if text.strip()])
-        
-        if not args.rawdata:           
-            tags_text = (                
+
+        if not args.rawdata:
+            tags_text = (
                 f"{special_text}, {clip_caption[4]}. ___\n"
                 f"accurate, {special_text}, ___{clip_caption[3]}\n"
-                f"inaccurate, {special_text}, ___{clip_caption[0]}" 
+                f"inaccurate, {special_text}, ___{clip_caption[0]}"
             )
         else:
             tags_text =(
                 f"{special_text}, {clip_caption[4]}. ___"
             )
         with open(tag_file_path, 'w', encoding='utf-8') as f:
-            f.write(tags_text.lower()) 
+            f.write(tags_text.lower())
         return folder_chartag, final_score
     except Exception as e:
         print(f"Failed to process image {image_path}: {e}")
@@ -500,17 +501,17 @@ def drop_chartags_in_folder(folder_path, folder_chartag):
     在指定目录中删除高频chartag
     输入: 目录路径folder_path, folder_chartag字典
     """
-    max_count = max(folder_chartag.values())    
+    max_count = max(folder_chartag.values())
     threshold = max_count / 3
     tags_to_drop = {tag for tag, count in folder_chartag.items() if count > threshold}
-    
+
     # 遍历目录中的每个txt文件
     for filename in os.listdir(folder_path):
         if filename.endswith('.txt'):
             file_path = os.path.join(folder_path, filename)
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
-            
+
             for i, line in enumerate(lines):
                 new_content = []
                 tags = [tag.strip() for tag in line.split(',')]
@@ -518,7 +519,7 @@ def drop_chartags_in_folder(folder_path, folder_chartag):
                     if tag and tag not in tags_to_drop:
                         new_content.append(tag)
                 lines[i] = ', '.join(new_content)
-            
+
             with open(file_path, 'w', encoding='utf-8') as file:
                 file.write('\n'.join(lines))
 
@@ -536,12 +537,12 @@ def find_and_process_images(directory, args):
 
         for image_path in tqdm(image_paths, desc=f"處理圖片 {root}"):
             try:
-                folder_chartag, final_score = process_image(image_path, folder_chartag, args)  
+                folder_chartag, final_score = process_image(image_path, folder_chartag, args)
                 all_final_scores.append((image_path, final_score))
             except Exception as e:
                 print(f"Failed to process image {image_path}: {e}")
                 traceback.print_exc()
-                
+
         if args.drop_chartag and folder_chartag:
             drop_chartags_in_folder(root, folder_chartag)
 
@@ -558,7 +559,7 @@ def find_and_process_images(directory, args):
                 accuracy_tag = "low accuracy."
             else:
                 accuracy_tag = "mess."
-            
+
             tag_file_path = Path(image_path).with_suffix('').with_suffix('.txt')
             if tag_file_path.exists():
                 with open(tag_file_path, 'r', encoding='utf-8') as file:
@@ -570,11 +571,11 @@ def find_and_process_images(directory, args):
                         content.replace('more accurate', '').replace('accurate', '')
                     if accuracy_tag == "mess":
                         content.replace('accurate', 'inaccurate')
-                    content.replace('inaccu___rate', 'inaccurate')    
+                    content.replace('inaccu___rate', 'inaccurate')
                     # 将修改后的内容写回文件
                     with open(tag_file_path, 'w', encoding='utf-8') as file:
                         file.write(content)
-        
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="圖片標籤處理腳本")
     parser.add_argument("--folder_name", action="store_true", help="使用目錄名當作角色名")
@@ -586,12 +587,12 @@ if __name__ == "__main__":
     parser.add_argument("--peopletag", action="store_true", help="前置多人標籤(大多nsfw)")
     parser.add_argument("--custom_keeptag", type=str, default=None, help="自定義自動留標")
     parser.add_argument("--rawdata", action="store_true", help="大資料集")
-    parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")    
+    parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
     parser.add_argument("directory", type=str, help="處理目錄地址")
     args = parser.parse_args()
     if args.not_char:
         args.folder_name = True
-        
+
     clip_labels = [f"the image seems {label}" for label in clip_labels]
     for label in clip_labels:
         if label not in text_features_dict:
