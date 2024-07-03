@@ -3,7 +3,15 @@ import os
 import sys
 import shutil
 import platform
-import requests
+def install_and_import(package):
+    try:
+        __import__(package)
+    except ImportError:
+        subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
+        __import__(package)
+
+# 安裝並導入所需的庫
+install_and_import("requests")
 
 def install_packages(venv_name='venv'):
     def is_package_installed(package_name, activate_command):
