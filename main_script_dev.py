@@ -329,7 +329,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         average_score = sum(score for _, score in label_scores) / len(label_scores)
     
     label_scores.sort(key=lambda x: x[1], reverse=True)
-    thresholds = [0.2, 0.2, 0.6, 0.6, 1.0]
+    thresholds = [0.3, 0.3, 0.6, 0.6, 1.0]
     selected_labels = [""] * 5
     total_labels = len(label_scores)
 
@@ -480,8 +480,10 @@ def process_image(image_path, folder_chartag, args):
         
         if not args.rawdata:           
             tags_text = (                
-                f"inaccurate, ___{special_text}, {clip_caption[4]}\n"
+                f"baseline, {special_text}, ___{clip_caption[4]}\n"
                 f"baseline, {special_text}, ___{clip_caption[3]}\n"
+                f"inaccurate___, {special_text}, {clip_caption[2]}\n"
+                f"accurate, {special_text}, {clip_caption[1]}. ___\n" 
                 f"accurate, {special_text}, {clip_caption[0]}. ___" 
             )
         else:
