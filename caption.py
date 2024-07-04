@@ -3,14 +3,10 @@ import os
 import platform
 import argparse
 import sys
-try:
-    import requests
-except ImportError:
-    subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
-    import requests
-
+import shutil
 
 def download_file(url, filename):
+    import requests
     try:
         response = requests.get(url)
         response.raise_for_status()  # This will raise一个 HTTPError如果 HTTP 请求返回了一个不成功的状态码
@@ -21,15 +17,48 @@ def download_file(url, filename):
         print(f"Failed to download {filename} from {url}: {e}")
         sys.exit(1)
 
-def run_setup_script():
-    setup_url = "https://raw.githubusercontent.com/gesen2egee/dataset_tools/main/setup.py"
-    setup_filename = "setup.py"
-    main_script_filename = "main_script.py"
-    
-    if not os.path.exists(setup_filename) or args.upgrade:
-        download_file(setup_url, setup_filename)
-    if not os.path.exists(main_script_filename) or args.upgrade:
-        subprocess.run([sys.executable, setup_filename], check=True)
+def run_setup_script(venv_name="venv"):
+    # 检查并创建虚拟环境
+    if not os.path.exists(venv_name):
+        print(f"Creating virtual environment: {venv_name}")
+        subprocess.run([sys.executable, '-m', 'venv', venv_name])
+    else:
+        print(f"Virtual environment '{venv_name}' already exists.")
+
+    if platform.system() == 'Windows':
+        activate_script = os.path.join('venv', 'Scripts', 'activate.bat')
+    else:
+        activate_script = os.path.join('venv', 'bin', 'activate')
+
+    flash_attn = "flash_attn==2.5.9.post1"
+    common_command = f"pip install -r requirements.txt && pip install {flash_attn} && pip cache purge"
+
+    print("Installing all modules")
+    if platform.system() == 'Windows':
+        command = f"{activate_script} && {common_command}"
+    else:
+        command = f". {activate_script} && {common_command}"
+
+    subprocess.run(command, check=True)
+
+def setup_longclip():
+    # 检查 checkpoints 目录是否存在
+    if not os.path.exists('./checkpoints'):
+        # 克隆仓库
+        if not os.path.exists('Long-CLIP'):
+            subprocess.run(['git', 'clone', 'https://github.com/beichenzbc/Long-CLIP'])
+
+        # 移动文件
+        for filename in os.listdir('Long-CLIP'):
+            shutil.move(os.path.join('Long-CLIP', filename), '.')
+
+        # 删除克隆的目录
+        shutil.rmtree('Long-CLIP')
+
+    # 下载权重文件
+    weight_url = 'https://huggingface.co/zer0int/LongCLIP-GmP-ViT-L-14/resolve/main/Long-ViT-L-14-GmP-ft-state_dict.pt?download=true'
+    weight_path = './checkpoints/Long-ViT-L-14-GmP-ft-state_dict.pt'
+    download_file(weight_url, weight_path)
 
 def run_main_script_in_venv(args):
     main_script_url = "https://raw.githubusercontent.com/gesen2egee/dataset_tools/main/main_script.py"
@@ -37,11 +66,6 @@ def run_main_script_in_venv(args):
 
     if not os.path.exists(main_script_filename) or args.upgrade:
         download_file(main_script_url, main_script_filename)
-
-    if platform.system() == 'Windows':
-        activate_script = os.path.join('venv', 'Scripts', 'activate.bat')
-    else:
-        activate_script = os.path.join('venv', 'bin', 'activate')
 
     command_args = [
         args.directory,
@@ -59,11 +83,10 @@ def run_main_script_in_venv(args):
 
     # 过滤掉空字符串
     command_args = [arg for arg in command_args if arg]
-
-    if os.name == 'nt':
+    if platform.system() == 'Windows':
         command = f"{activate_script} && python {main_script_filename} " + subprocess.list2cmdline(command_args)
     else:
-        command = f"source {activate_script} && python {main_script_filename} " + subprocess.list2cmdline(command_args)
+        command = f". {activate_script} && python {main_script_filename} " + subprocess.list2cmdline(command_args)
 
     subprocess.run(command, shell=True, check=True)
 
@@ -84,4 +107,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_setup_script()
+    setup_longclip()
     run_main_script_in_venv(args)
