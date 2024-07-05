@@ -64,7 +64,7 @@ view_labels = [
     "portrait", "upper body", "lower body", "cowboy shot", "feet out of frame",
     "full body", "wide shot", "very wide shot", "close-up", "cut-in", "split crop",
     "cropped legs", "cropped torso", "cropped arms", "cropped shoulders",
-    "cropped head", "profile", "from behind", "from side", "upside-down", "no human"
+    "cropped head", "profile", "from behind", "from side", "upside-down"
 ]
 
 text_features_dict = {}
