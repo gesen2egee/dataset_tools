@@ -399,7 +399,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         tag_from_folder = parent_folder.split('_')[1].replace('_', ' ').strip().lower()    
     labels = [lebel_word + label for label in short_caption.split(", ") if label.strip() and label not in labels and not (contains_color(label) and args.drop_colortag) and label != tag_from_folder]
     preson_labels = ['focus on one person', 'two persons', 'three persons', 'four persons', 'five persons', 'many persons', 'lots of people']
-    is_solo = "solo" in labels or "solo focus" in labels
+    is_solo = False 
+    is_solo = "solo" in short_caption
     
     for label in labels + long_labels + preson_labels:
         if label not in text_features_dict:
