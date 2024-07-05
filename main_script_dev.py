@@ -63,13 +63,12 @@ people_tags = [
 view_labels = [
     "portrait", "upper body", "lower body", "cowboy shot", "feet out of frame",
     "full body", "wide shot", "very wide shot", "close-up", "cut-in", "split crop",
-    "cropped legs", "cropped torso", "cropped arms", "cropped shoulders",
-    "cropped head", "profile", "from behind", "from side", "upside-down"
+    "profile", "from behind", "from side", "upside-down"
 ]
 
 text_features_dict = {}
-lebel_word = " is "
-clip_word = " looks "
+lebel_word = ", is "
+clip_word = ", looks "
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -281,7 +280,6 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 if 'middle' in grid_position:
                     grid_position += "-right" * middle_count  
                     middle_count += 1 
-                print(f'{grid_position} {view_label}')
                 cluster.append((f'{grid_position} {view_label}', float('-inf')))  # Add grid position with score -inf
 
                 if cluster:
@@ -308,7 +306,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             clusters = process_special_tags(label_scores, image)
             final_clusters = []
             remaining_label_scores = label_scores.copy()
-
+            
             for cluster in clusters:
                 higher_scores = [(label, score) for label, score in cluster if score > dict(label_scores).get(label, float('-inf')) or score == float('-inf')]
                 if higher_scores:
@@ -320,10 +318,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             remaining_label_scores = [(label, score) for label, score in label_scores if label not in final_cluster_labels]
             clusters = {i: final_clusters[i] for i in range(len(final_clusters))}
             clusters[len(final_clusters)] = remaining_label_scores
-            
-        empty_clusters = []
         # Internal sorting of clusters and identifying special labels
-        for i, cluster_labels in clusters.items():
+        for i in list(clusters.keys()):
+            cluster_labels = clusters[i]
             cluster_labels.sort(key=lambda x: x[1], reverse=True)
             if cluster_labels[-1][1] == float('-inf'):
                 special_label, _ = cluster_labels.pop()
@@ -331,16 +328,13 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                     best_label, best_score = cluster_labels.pop(0)
                     combined_label = f"{special_label} {best_label}"
                     cluster_labels.insert(0, (combined_label, best_score))
-                else:    
-                    empty_clusters.append(i)
+                else:
+                    del clusters[i]
 
-        for i in empty_clusters:
-            del clusters[i]
+        sorted_clusters = sorted(clusters.values(), key=lambda cluster_labels: np.mean([score for _, score in cluster_labels if score != float('-inf')]), reverse=True)
 
-        sorted_clusters = sorted(clusters.values(), key=lambda cluster_labels: np.mean([score for _, score in cluster_labels]), reverse=True)
         thresholds = [2, 2, 4, 4, 99]
         selected_labels = [""] * 5
-
         for i, threshold in enumerate(thresholds):
             selected_labels_clust = []
             for cluster_labels in sorted_clusters:
