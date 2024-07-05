@@ -610,7 +610,7 @@ def process_image(image_path, folder_chartag, args):
         more_detailed_caption, _ = run_example('<MORE_DETAILED_CAPTION>', image) 
         clip_caption = []
         clip_caption, final_score, clothtag, persontag, peopletag, custom_keeptag, image_info = calculate_best_labels(image, wd14_caption, more_detailed_caption, image_path)
-        florence_caption =', '.join([label.lower() for label in more_detailed_caption.split(", ") if label.strip() and label not in long_labels and '"' not in label and not any(char.isupper() for char in label[1:])])
+        florence_caption =', '.join([label.lower() for label in more_detailed_caption.split(", ") if label.strip() and '"' not in label and not any(char.isupper() for char in label[1:])])
         aestag = get_aesthetic_tag(image)
         folder_chartag = build_folder_chartag(clip_caption[4], folder_chartag) 
         if persontag:
