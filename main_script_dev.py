@@ -330,8 +330,10 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                     best_label, best_score = cluster_labels.pop(0)
                     combined_label = f"{special_label} {best_label}"
                     cluster_labels.insert(0, (combined_label, best_score))
-                #else:
-                #    del clusters[i] 
+                empty_clusters.append(i)
+
+        for i in empty_clusters:
+            del clusters[i]
 
         sorted_clusters = sorted(clusters.values(), key=lambda cluster_labels: np.mean([score for _, score in cluster_labels]), reverse=True)
         thresholds = [2, 2, 4, 4, 99]
