@@ -280,9 +280,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 grid_position = get_grid_position(center_x, center_y, width, height)
                 if 'middle' in grid_position:
                     grid_position += "-right" * middle_count  
-                    middle_count += 1
+                    middle_count += 1 
                 print(f'{grid_position} {view_label}')
-                cluster.append((f'{grid_position} {view_label} person', float('-inf')))  # Add grid position with score -inf
+                cluster.append((f'{grid_position} {view_label}', float('-inf')))  # Add grid position with score -inf
 
                 if cluster:
                     final_clusters.append(cluster)
@@ -430,8 +430,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     if args.clothtag and is_solo:
         clothes_labels = [label for label in short_caption.split(", ") if label.strip() and label not in clothes_labels and label in clothing_tags]
         clothtags = []
-        clothtags = find_best_combined_text(image_features, clothes_labels, 'the person is wearing', 2)
-        clothtag = ' '.join(clothtags[:4])
+        clothtags = find_best_combined_text(image_features, clothes_labels, 'the person is wearing', 3)
+        clothtag = ' '.join(clothtags[:6])
         labels = [label for label in labels if label.replace(lebel_word, "") not in clothtags]
 
     if args.peopletag and (is_solo or persontag == 'two persons'):
@@ -610,6 +610,7 @@ def process_image(image_path, folder_chartag, args):
         more_detailed_caption, _ = run_example('<MORE_DETAILED_CAPTION>', image) 
         clip_caption = []
         clip_caption, final_score, clothtag, persontag, peopletag, custom_keeptag, image_info = calculate_best_labels(image, wd14_caption, more_detailed_caption, image_path)
+        florence_caption =', '.join([label.lower() for label in more_detailed_caption.split(", ") if label.strip() and label not in long_labels and '"' not in label and not any(char.isupper() for char in label[1:])])
         aestag = get_aesthetic_tag(image)
         folder_chartag = build_folder_chartag(clip_caption[4], folder_chartag) 
         if persontag:
@@ -637,9 +638,11 @@ def process_image(image_path, folder_chartag, args):
         
         if not args.rawdata:           
             tags_text = (
-                f"inaccurate, {special_text}, ___{clip_caption[4]}\n"
-                f"{special_text}, ___{clip_caption[3]}\n"
-                f"accurate, {special_text}, {clip_caption[0]}. ___"
+                f"accurate, {special_text}, ___{clip_caption[4]}\n"
+                f"{special_text}, ___{florence_caption}\n"
+                f"{special_text}, ___{florence_caption}"
+                f"\ninaccurate, {special_text}. ___" if args.folder_name else ""
+                f"\ninaccurate, {special_text}. ___" if 'solo' in features else ""
             )
         else:
             tags_text =(
