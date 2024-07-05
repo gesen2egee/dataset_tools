@@ -331,7 +331,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                     best_label, best_score = cluster_labels.pop(0)
                     combined_label = f"{special_label} {best_label}"
                     cluster_labels.insert(0, (combined_label, best_score))
-                empty_clusters.append(i)
+                else:    
+                    empty_clusters.append(i)
 
         for i in empty_clusters:
             del clusters[i]
