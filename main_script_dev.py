@@ -280,7 +280,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 if 'middle' in grid_position:
                     grid_position += "-right" * middle_count  
                     middle_count += 1 
-                cluster.append((f'{grid_position} {view_label}', float('-inf')))  # Add grid position with score -inf
+                cluster.append((f'{grid_position} {view_label} one is', float('-inf')))  # Add grid position with score -inf
 
                 if cluster:
                     final_clusters.append(cluster)
