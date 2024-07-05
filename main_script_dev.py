@@ -279,8 +279,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 view_label = get_view_label(image_features)
                 grid_position = get_grid_position(center_x, center_y, width, height)
                 if 'middle' in grid_position:
+                    grid_position += "-right" * middle_count  
                     middle_count += 1
-                    grid_position += "-right" * middle_count   
                 print(f'{grid_position} {view_label}')
                 cluster.append((f'{grid_position} {view_label} person', float('-inf')))  # Add grid position with score -inf
 
