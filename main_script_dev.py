@@ -320,7 +320,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             remaining_label_scores = [(label, score) for label, score in label_scores if label not in final_cluster_labels]
             clusters = {i: final_clusters[i] for i in range(len(final_clusters))}
             clusters[len(final_clusters)] = remaining_label_scores
-
+            
+        empty_clusters = []
         # Internal sorting of clusters and identifying special labels
         for i, cluster_labels in clusters.items():
             cluster_labels.sort(key=lambda x: x[1], reverse=True)
