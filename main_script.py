@@ -394,7 +394,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     #with torch.no_grad():
     #    text_features = clip_model.encode_text(text_tensor)
     #    text_features = F.normalize(text_features, dim=-1)
-    #final_score = average_score
+    final_score = average_score
   
     return selected_labels, final_score, clothtag, persontag, peopletag, custom_keeptag, image_info
 
