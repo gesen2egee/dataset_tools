@@ -45,7 +45,8 @@ def install_packages(venv_name='venv'):
         'dghs-imgutils[gpu]',
         'timm',
         'aesthetic-predictor-v2-5',
-        'requests'
+        'requests',
+        'faiss-cpu'
     ]
 
     # 安装 PyTorch 和 torchvision
