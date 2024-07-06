@@ -2,13 +2,8 @@ import subprocess
 import os
 import platform
 import argparse
+import requests
 import sys
-try:
-    import requests
-except ImportError:
-    subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
-    import requests
-
 
 def download_file(url, filename):
     try:
@@ -26,8 +21,8 @@ def run_setup_script():
     setup_filename = "setup.py"
     main_script_filename = "main_script.py"
     
-    if not os.path.exists(setup_filename) or args.upgrade:
-        download_file(setup_url, setup_filename)
+    #if not os.path.exists(setup_filename) or args.upgrade:
+    #    download_file(setup_url, setup_filename)
     if not os.path.exists(main_script_filename) or args.upgrade:
         subprocess.run([sys.executable, setup_filename], check=True)
 
@@ -35,8 +30,8 @@ def run_main_script_in_venv(args):
     main_script_url = "https://raw.githubusercontent.com/gesen2egee/dataset_tools/main/main_script.py"
     main_script_filename = "main_script.py"
 
-    if not os.path.exists(main_script_filename) or args.upgrade:
-        download_file(main_script_url, main_script_filename)
+    #if not os.path.exists(main_script_filename) or args.upgrade:
+    #    download_file(main_script_url, main_script_filename)
 
     if platform.system() == 'Windows':
         activate_script = os.path.join('venv', 'Scripts', 'activate.bat')
@@ -53,8 +48,10 @@ def run_main_script_in_venv(args):
         "--not_char" if args.not_char else "",
         "--debiased" if args.debiased else "",
         "--rawdata" if args.rawdata else "",
+        "--clustertag" if args.clustertag else "",
         f"--custom_keeptag=\"{args.custom_keeptag}\"" if args.custom_keeptag else "",
-        f"--continue_caption {args.continue_caption}" if args.continue_caption else ""
+        f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
+        f"--autodroptag {args.autodroptag}" if args.autodroptag else ""
     ]
 
     # 过滤掉空字符串
@@ -80,6 +77,8 @@ if __name__ == "__main__":
     parser.add_argument("--custom_keeptag", type=str, default=None, help="自定義自動留標")
     parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
     parser.add_argument("--upgrade", action="store_true", help="升級腳本")
+    parser.add_argument("--clustertag", action="store_true", help="對標籤聚類")
+    parser.add_argument("--autodroptag", type=float, default=0, help="自動刪標，刪除跟資料集太接近的標，小數點是比例")
     parser.add_argument("directory", type=str, help="處理目錄地址")
     args = parser.parse_args()
 
