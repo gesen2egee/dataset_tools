@@ -21,8 +21,8 @@ def run_setup_script():
     setup_filename = "setup.py"
     main_script_filename = "main_script.py"
     
-    #if not os.path.exists(setup_filename) or args.upgrade:
-    #    download_file(setup_url, setup_filename)
+    if not os.path.exists(setup_filename) or args.upgrade:
+        download_file(setup_url, setup_filename)
     if not os.path.exists(main_script_filename) or args.upgrade:
         subprocess.run([sys.executable, setup_filename], check=True)
 
@@ -30,8 +30,8 @@ def run_main_script_in_venv(args):
     main_script_url = "https://raw.githubusercontent.com/gesen2egee/dataset_tools/main/main_script.py"
     main_script_filename = "main_script.py"
 
-    #if not os.path.exists(main_script_filename) or args.upgrade:
-    #    download_file(main_script_url, main_script_filename)
+    if not os.path.exists(main_script_filename) or args.upgrade:
+        download_file(main_script_url, main_script_filename)
 
     if platform.system() == 'Windows':
         activate_script = os.path.join('venv', 'Scripts', 'activate.bat')
