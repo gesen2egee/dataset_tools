@@ -14,6 +14,12 @@ requests
 packaging
 setuptools
 wheel
-torch==2.2.2
-torchvision==0.17.2
 faiss-cpu
+
+# PyTorch
+torch==2.2.2; platform_system != "Windows"
+torchvision==0.17.2; platform_system != "Windows"
+https://download.pytorch.org/whl/cu121/torch-2.2.2%2Bcu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://download.pytorch.org/whl/cu121/torchvision-0.17.2%2Bcu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://download.pytorch.org/whl/cu121/torch-2.2.2%2Bcu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
+https://download.pytorch.org/whl/cu121/torchvision-0.17.2%2Bcu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"

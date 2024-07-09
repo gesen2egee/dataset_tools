@@ -32,6 +32,12 @@ def run_setup_script(venv_name="venv"):
         activate_script = os.path.join('venv', 'bin', 'activate')
 
     flash_attn = "flash_attn==2.5.9.post1"
+    if platform.system() == 'Windows':
+        if sys.version_info[:2] == (3, 11):
+            flash_attn = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.2.2cxx11abiFALSE-cp311-cp311-win_amd64.whl"
+        elif sys.version_info[:2] == (3, 10):
+            flash_attn = "https://github.com/oobabooga/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.2.2cxx11abiFALSE-cp310-cp310-win_amd64.whl"
+
     common_command = f"pip install -r requirements.txt && pip install {flash_attn} && pip cache purge"
 
     print("Installing all modules")
