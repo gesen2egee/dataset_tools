@@ -67,8 +67,8 @@ view_labels = [
 ]
 
 text_features_dict = {}
-lebel_word = ", is "
-clip_word = ", looks "
+lebel_word = ""
+clip_word = ""
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -226,9 +226,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             col = ''
 
             if center_x < width / 3:
-                col = 'left'
-            elif center_x > 2 * width / 3:
                 col = 'right'
+            elif center_x > 2 * width / 3:
+                col = 'left'
             
             if center_y < height / 3:
                 row = 'upper-'
@@ -238,7 +238,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             if row == '' and col == '':
                 return 'middle'
             else:
-                return f"{row}{col}"
+                return f"{row}{col} side"
                 
         def get_view_label(image_features):
             best_view_label = None
@@ -278,7 +278,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 view_label = get_view_label(image_features)
                 grid_position = get_grid_position(center_x, center_y, width, height)
                 if 'middle' in grid_position:
-                    grid_position += "-right" * middle_count  
+                    grid_position += "-left" * middle_count  
                     middle_count += 1 
                 cluster.append((f'{grid_position} {view_label} one is', float('-inf')))  # Add grid position with score -inf
 
@@ -322,7 +322,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         for i in list(clusters.keys()):
             cluster_labels = clusters[i]
             cluster_labels.sort(key=lambda x: x[1], reverse=True)
-            if cluster_labels[-1][1] == float('-inf'):
+            if cluster_labels and cluster_labels[-1][1] == float('-inf'):
                 special_label, _ = cluster_labels.pop()
                 if cluster_labels:
                     best_label, best_score = cluster_labels.pop(0)
@@ -338,7 +338,11 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         for i, threshold in enumerate(thresholds):
             selected_labels_clust = []
             for cluster_labels in sorted_clusters:
-                selected_labels_clust.append(' '.join([label.replace(clip_word, "").replace(lebel_word, "") for label, _ in cluster_labels[:threshold]]))
+                cluster_labels = [label.replace(clip_word, "").replace(lebel_word, "") for label, _ in cluster_labels]
+                if len(cluster_labels) - 1 > threshold: 
+                    selected_labels_clust.append(' '.join([label for label in cluster_labels[:threshold]] + ['{' + '|'.join(cluster_labels[threshold:]) + '}']))
+                else:
+                    selected_labels_clust.append(' '.join([label for label in cluster_labels]))
             selected_labels[i] = ', '.join(selected_labels_clust)
 
         return selected_labels
@@ -380,6 +384,32 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
 
         return best_labels
 
+    def find_best_concat(image_features, labels, last_label= ''):
+        best_label, best_score = '', float('-inf')
+        labels_length = len(labels)
+        while True:
+            for label in labels:
+                combined_text = f'{last_label}, {label}'
+                text_tensor = longclip.tokenize([combined_text]).to(device)
+
+                with torch.no_grad():
+                    text_features = clip_model.encode_text(text_tensor)
+                    text_features = F.normalize(text_features, dim=-1)
+                    logits_per_image = (image_features @ text_features.T).item()
+
+                if logits_per_image > best_score:
+                    best_score = logits_per_image
+                    best_label = label
+                    last_label = combined_text
+                    labels.remove(label)
+                    if labels_length > 10:
+                        break
+            if best_label is None:
+                break
+            best_label = None
+        
+        return last_label, best_score
+
     image_tensor = clip_preprocess(image).unsqueeze(0).to(device)
     with torch.no_grad():
         image_features = clip_model.encode_image(image_tensor)
@@ -388,6 +418,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     labels, long_labels, clothes_labels, people_labels = [], [], [], []
     clothtag, persontag, peopletag, custom_keeptag = '', '', '', ''
     long_labels = [label.lower() for label in long_caption.split(", ") if label.strip() and label not in long_labels and '"' not in label and not any(char.isupper() for char in label[1:])]
+    florence_caption = ', '.join(long_labels)
     parent_folder = Path(image_path).parent.name
     tag_from_folder = ""
     if args.not_char and "_" in parent_folder and parent_folder.split("_")[0].isdigit():
@@ -447,33 +478,50 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         custom_keeptag = ', '.join(custom_keeptags[:4])
         labels = [label for label in labels if label.replace(lebel_word, "") not in custom_keeptags]         
 
-    labels = list(set(labels + top_clip_labels + long_labels))
-    label_scores = []
+    labels = list(set(labels + top_clip_labels))
+    concat1, _ = find_best_concat(image_features, labels)
+    concat1, best_score1 = find_best_concat(image_features, long_labels, concat1)
+    all_labels = set(concat1.split(', '))    
+    remain_labels = [label for label in labels if label not in all_labels]
+    concat1 = ', '.join([concat1] + remain_labels)
+    concat2, best_score2 = find_best_concat(image_features, labels, florence_caption)
+    set1 = set(concat1.split(', '))
+    set2 = set(concat2.split(', '))
+    print(set1 - set2)
+    print(set2 - set1)
+    
+    #concat1 = ', '.join([concat1] + remain_labels)
+    #concat2 = ', '.join([concat2] + remain_labels)
+    final_score = (best_score1 + best_score2) / 2
+    selected_labels = [concat1, concat1, concat1, concat2, concat2]
+
+#    labels = list(set(labels + top_clip_labels + long_labels))
+#    label_scores = []
     image_info=[]
     image_info = [image_path, image_features, labels]
-
-    for label in labels:
-        with torch.no_grad():
-            logits_per_image = (image_features @ text_features_dict[label].T).item()
-        label_scores.append((label, logits_per_image))
-        
-    average_score = sum(score for _, score in label_scores) / len(label_scores)
-
-    if args.debiased:
-        filtered_label_scores = []
-        for item in label_scores:
-            if item[1] < average_score * 2:
-                filtered_label_scores.append(item)
-            else:
-                print(f"Discarding label: {item[0]}, score: {item[1] / average_score}")
-        label_scores = filtered_label_scores    
-        average_score = sum(score for _, score in label_scores) / len(label_scores)
-    
-    label_scores.sort(key=lambda x: x[1], reverse=True)
-    
+#
+#    for label in labels:
+#        with torch.no_grad():
+#            logits_per_image = (image_features @ text_features_dict[label].T).item()
+#        label_scores.append((label, logits_per_image))
+#        
+#    average_score = sum(score for _, score in label_scores) / len(label_scores)
+#
+#    if args.debiased:
+#        filtered_label_scores = []
+#        for item in label_scores:
+#            if item[1] < average_score * 2:
+#                filtered_label_scores.append(item)
+#            else:
+#                print(f"Discarding label: {item[0]}, score: {item[1] / average_score}")
+#        label_scores = filtered_label_scores    
+#        average_score = sum(score for _, score in label_scores) / len(label_scores)
+#    
+#    label_scores.sort(key=lambda x: x[1], reverse=True)
+#    
     #if args.clustertag:
-    selected_labels = cluster_labels(label_scores, is_solo, persontag, image)
-    #else:    
+#    selected_labels = cluster_labels(label_scores, is_solo, persontag, image)
+#    #else:    
     #    thresholds = [0.2, 0.2, 0.6, 0.6, 1.0]
     #    selected_labels = [""] * 5
     #    total_labels = len(label_scores)
@@ -487,8 +535,8 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
     #with torch.no_grad():
     #    text_features = clip_model.encode_text(text_tensor)
     #    text_features = F.normalize(text_features, dim=-1)
-    final_score = average_score
-  
+#    final_score = average_score
+#  
     return selected_labels, final_score, clothtag, persontag, peopletag, custom_keeptag, image_info
 
 def process_image(image_path, folder_chartag, args):
@@ -637,11 +685,8 @@ def process_image(image_path, folder_chartag, args):
         
         if not args.rawdata:           
             tags_text = (
-                f"accurate, {special_text}, ___{clip_caption[4]}\n"
-                f"{special_text}, ___{florence_caption}\n"
-                f"{special_text}, ___{florence_caption}"
-                f"\ninaccurate, {special_text}. ___" if args.folder_name else ""
-                f"\ninaccurate, {special_text}. ___" if 'solo' in features else ""
+                f"{special_text}, ___{clip_caption[4]}\n"
+                f"{special_text}, ___{clip_caption[0]}."
             )
         else:
             tags_text =(
@@ -740,7 +785,8 @@ def find_and_process_images(directory, args):
             try:
                 folder_chartag, final_score, image_info = process_image(image_path, folder_chartag, args)  
                 all_final_scores.append((image_path, final_score))
-                image_infos_list.append(image_info)
+                if image_info:
+                    image_infos_list.append(image_info)
             except Exception as e:
                 print(f"Failed to process image {image_path}: {e}")
                 traceback.print_exc()

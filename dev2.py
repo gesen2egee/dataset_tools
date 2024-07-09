@@ -226,9 +226,9 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             col = ''
 
             if center_x < width / 3:
-                col = 'left'
-            elif center_x > 2 * width / 3:
                 col = 'right'
+            elif center_x > 2 * width / 3:
+                col = 'left'
             
             if center_y < height / 3:
                 row = 'upper-'
@@ -238,7 +238,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
             if row == '' and col == '':
                 return 'middle'
             else:
-                return f"{row}{col}"
+                return f"{row}{col} side"
                 
         def get_view_label(image_features):
             best_view_label = None
@@ -278,7 +278,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
                 view_label = get_view_label(image_features)
                 grid_position = get_grid_position(center_x, center_y, width, height)
                 if 'middle' in grid_position:
-                    grid_position += "-right" * middle_count  
+                    grid_position += "-left" * middle_count  
                     middle_count += 1 
                 cluster.append((f'{grid_position} {view_label} one is', float('-inf')))  # Add grid position with score -inf
 
@@ -322,7 +322,7 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         for i in list(clusters.keys()):
             cluster_labels = clusters[i]
             cluster_labels.sort(key=lambda x: x[1], reverse=True)
-            if cluster_labels[-1][1] == float('-inf'):
+            if cluster_labels and cluster_labels[-1][1] == float('-inf'):
                 special_label, _ = cluster_labels.pop()
                 if cluster_labels:
                     best_label, best_score = cluster_labels.pop(0)
@@ -338,7 +338,11 @@ def calculate_best_labels(image, short_caption, long_caption, image_path):
         for i, threshold in enumerate(thresholds):
             selected_labels_clust = []
             for cluster_labels in sorted_clusters:
-                selected_labels_clust.append(' '.join([label.replace(clip_word, "").replace(lebel_word, "") for label, _ in cluster_labels[:threshold]]))
+                cluster_labels = [label.replace(clip_word, "").replace(lebel_word, "") for label, _ in cluster_labels]
+                if len(cluster_labels) - 1 > threshold: 
+                    selected_labels_clust.append(' '.join([label for label in cluster_labels[:threshold]] + ['{' + '|'.join(cluster_labels[threshold:]) + '}']))
+                else:
+                    selected_labels_clust.append(' '.join([label for label in cluster_labels]))
             selected_labels[i] = ', '.join(selected_labels_clust)
 
         return selected_labels
@@ -637,11 +641,9 @@ def process_image(image_path, folder_chartag, args):
         
         if not args.rawdata:           
             tags_text = (
-                f"accurate, {special_text}, ___{clip_caption[4]}\n"
-                f"{special_text}, ___{florence_caption}\n"
-                f"{special_text}, ___{florence_caption}"
-                f"\ninaccurate, {special_text}. ___" if args.folder_name else ""
-                f"\ninaccurate, {special_text}. ___" if 'solo' in features else ""
+                f"inaccurate, {special_text}, ___{clip_caption[4]}\n"
+                f"{special_text}, ___{clip_caption[3]}\n"
+                f"accurate, {special_text}, {clip_caption[0]}. ___"
             )
         else:
             tags_text =(
@@ -740,7 +742,8 @@ def find_and_process_images(directory, args):
             try:
                 folder_chartag, final_score, image_info = process_image(image_path, folder_chartag, args)  
                 all_final_scores.append((image_path, final_score))
-                image_infos_list.append(image_info)
+                if image_info:
+                    image_infos_list.append(image_info)
             except Exception as e:
                 print(f"Failed to process image {image_path}: {e}")
                 traceback.print_exc()

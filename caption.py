@@ -2,6 +2,7 @@ import subprocess
 import os
 import platform
 import argparse
+import requests
 import sys
 import shutil
 
@@ -77,8 +78,10 @@ def run_main_script_in_venv(args):
         "--not_char" if args.not_char else "",
         "--debiased" if args.debiased else "",
         "--rawdata" if args.rawdata else "",
+        "--clustertag" if args.clustertag else "",
         f"--custom_keeptag=\"{args.custom_keeptag}\"" if args.custom_keeptag else "",
-        f"--continue_caption {args.continue_caption}" if args.continue_caption else ""
+        f"--continue_caption {args.continue_caption}" if args.continue_caption else "",
+        f"--autodroptag {args.autodroptag}" if args.autodroptag else ""
     ]
 
     # 过滤掉空字符串
@@ -103,6 +106,8 @@ if __name__ == "__main__":
     parser.add_argument("--custom_keeptag", type=str, default=None, help="自定義自動留標")
     parser.add_argument("--continue_caption", type=int, default=0, help="忽略n天內打的標")
     parser.add_argument("--upgrade", action="store_true", help="升級腳本")
+    parser.add_argument("--clustertag", action="store_true", help="對標籤聚類")
+    parser.add_argument("--autodroptag", type=float, default=0, help="自動刪標，刪除跟資料集太接近的標，小數點是比例")
     parser.add_argument("directory", type=str, help="處理目錄地址")
     args = parser.parse_args()
 
