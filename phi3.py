@@ -41,19 +41,29 @@ Note: Only output the detailed description, no other content is needed.
 """
 
 user_prompt = """<|image_1|>
-Use JSON format: "{"description:"","tags":""}" and the "description" is about the image within 150 words with this format "This image include {characters, main object}, {setting or actions with pose}, {describe the background}, {emotions, artistic style and composition type}, and any other for the image.", "tags" is a list of 8-20 short tag about the image.
+Describe the image within 150 words with this format: This image include {characters, main object}, {setting or actions with pose}, {describe the background}, {emotions, artistic style and composition type}, and any other for the image.
 """
 
-conversation = [
-    {
-        "role": "system",
-        "content": system_prompt
-    },
-    {
-        "role": "user",
-        "content": user_prompt
-    }
-]
+def do_conversation(conversation, image, max_new_tokens=1024):
+    prompt = processor.tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=True)
+    inputs = processor(prompt, image, return_tensors="pt").to("cuda:0")
+
+    generate_ids = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+        temperature=None,
+        top_p=None,
+        top_k=None,
+        repetition_penalty=1.05,
+        eos_token_id=processor.tokenizer.eos_token_id,
+    )
+    generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
+    return processor.batch_decode(generate_ids,
+        skip_special_tokens=True,
+        skip_prompt=True,
+        clean_up_tokenization_spaces=False
+    )[0]
 
 def process_image(image_path, args):
     """
@@ -72,34 +82,29 @@ def process_image(image_path, args):
         return image
 
     image = resize_image(image_path)
+    conversation = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": user_prompt
+        }
+    ]
 
-    prompt = processor.tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=True)
-    inputs = processor(prompt, image, return_tensors="pt").to("cuda:0")
+    description = do_conversation(conversation, image, max_new_tokens=800)
+    conversation.append({"role": "assistant", "content": description})
 
-    generate_ids = model.generate(
-        **inputs,
-        max_new_tokens=1024,
-        do_sample=False,
-        temperature=None,
-        top_p=None,
-        top_k=None,
-        repetition_penalty=1.05,
-        eos_token_id=processor.tokenizer.eos_token_id,
-    )
-    generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
-    response = processor.batch_decode(generate_ids,
-        skip_special_tokens=True,
-        skip_prompt=True,
-        clean_up_tokenization_spaces=False
-    )[0]
+    conversation.extend([{"role": "user", "content": "Tags list should capture key elements such as the {characters, main object}, {setting or actions with pose}, {describe the background}, {emotions, artistic style and composition type}. Using comma-separated."}])
+    tags = do_conversation(conversation, image, max_new_tokens=300)
 
-    try:
-        response = json.loads(response)
-        response['tags'] = ', '.join(response['tags'])
-    except Exception as e:
-        response = dict({"description": None, "tags": None})
+    description = description.replace('.', ',')
 
-    return response['description'], response['tags']
+    tags = tags.split(', ')
+    tags = ', '.join(list(set([tag.replace('.', ' ').replace(',', ' ').strip() for tag in tags])))
+
+    return description, tags
 
 def find_and_process_images(directory, args):
     directory = directory.replace('\\', '/')
@@ -132,7 +137,6 @@ def find_and_process_images(directory, args):
                 description, tags = process_image(image_path, args)
 
                 if description != None and tags != None:
-                    description = description.replace('.', ',')
                     content = f"{trigger_word}{chartag_from_folder}___{tags}___ {description}\n"
                     content += f"{trigger_word}{chartag_from_folder}{description}\n"
                     content += f"{trigger_word}{chartag_from_folder}___{tags}___"
