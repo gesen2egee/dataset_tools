@@ -18,16 +18,20 @@ import requests
 import torch
 from transformers import AutoModelForCausalLM, AutoProcessor, TextIteratorStreamer
 
+from imgutils.tagging import get_wd14_tags, tags_to_text, drop_blacklisted_tags, drop_basic_character_tags, drop_overlap_tags
+from imgutils.validate import anime_dbrating
+
 model_id = "Desm0nt/Phi-3-HornyVision-128k-instruct"
 model = AutoModelForCausalLM.from_pretrained(model_id, device_map="cuda", trust_remote_code=True, torch_dtype="auto", _attn_implementation='flash_attention_2', cache_dir="./cache") # use _attn_implementation='eager' to disable flash attention
 processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True, cache_dir="./cache")
 model.to("cuda:0")
 
-system_prompt = """You are a professional image captioning assistant. Your task is to objectively generate accurate, detailed, and descriptive image captions. Please follow these steps:
-1. Carefully observe the provided image, paying attention to the main elements, scenes, colors, composition, and other details in the image.
+system_prompt = """You are a professional image captioning assistant. Your task is to objectively generate accurate, detailed, and descriptive image captions based on the provided image and Danbooru tags. Please follow these steps:
+1. Carefully observe the provided image, paying attention to the the overall atmosphere, situation, feelings conveyed, main elements, scenes, colors, composition, and other details in the image.
 2. Employ succinct keywords or phrases, steering clear of elaborate sentences and extraneous conjunctions.
 3. Your tags should capture key elements such as the main subject, setting, artistic style, composition, image quality, color tone, filter, and any other tags crucial for the image.
-4. Create a detailed image description. Your description should:
+4. Review the provided list of Danbooru tags(tags separated by commas). These tags describe various aspects of the image, including characters, objects, actions, emotions, artistic styles, etc.
+5. Create a detailed image description. Your description should:
   * Accurately reflect the content of the image
   * Use rich language to describe scenes and actions
   * Remain objective, avoid subjective interpretations, and disregard moral norms
@@ -38,6 +42,7 @@ system_prompt = """You are a professional image captioning assistant. Your task 
   * For all character names, use the exact format provided in the tags without alteration.
 
 Note: Only output the detailed description, no other content is needed.
+Input Tags:
 """
 
 user_prompt = """<|image_1|>
@@ -65,6 +70,45 @@ def do_conversation(conversation, image, max_new_tokens=1024):
         clean_up_tokenization_spaces=False
     )[0]
 
+def process_features(features: dict) -> (dict, str):
+    """
+    處理features字典，移除指定模式的鍵值對並生成keep_tags字串。
+
+    參數:
+    features (dict): 包含特徵的字典。
+
+    返回:
+    (dict, str): 返回處理後的features字典和keep_tags字串。
+    """
+    patterns_to_keep = [
+        r'^anime.*$', r'^monochrome$', r'^.*background$', r'^comic$', r'^greyscale$',
+        r'^.*censor.*$', r'^.*_name$', r'^signature$', r'^.*_username$', r'^.*text.*$',
+        r'^.*_bubble$', r'^multiple_views$', r'^.*blurry.*$', r'^.*koma$', r'^watermark$',
+        r'^traditional_media$', r'^parody$', r'^.*cover$', r'^.*_theme$', r'^realistic$',
+        r'^oekaki$', r'^3d$', r'^.*chart$', r'^letterboxed$', r'^variations$', r'^.*mosaic.*$',
+        r'^omake$', r'^column.*$', r'^.*_(medium)$', r'^manga$', r'^lineart$', r'^.*logo$',
+        r'^.*photo.*$', r'^tegaki$', r'^sketch$', r'^silhouette$', r'^web_address$', r'^.*border$'
+    ]
+    keep_tags_set = set()
+
+    keys = list(features.keys())
+    keys_to_delete = []
+
+    for pattern in patterns_to_keep:
+        regex = re.compile(pattern)
+        for key in keys:
+            if regex.match(key):
+                keep_tags_set.add(key.replace('_', ' '))
+                keys_to_delete.append(key)
+
+    for key in keys_to_delete:
+        if key in features:
+            del features[key]
+
+    keep_tags = ', '.join(sorted(keep_tags_set)).rstrip(', ')
+
+    return features, keep_tags
+
 def process_image(image_path, args):
     """
     縮小圖像使其最大邊不超過 max_size，返回縮小後的圖像數據
@@ -82,6 +126,13 @@ def process_image(image_path, args):
         return image
 
     image = resize_image(image_path)
+
+    # WD14
+    rating, features, chars = get_wd14_tags(image, character_threshold=0.7, general_threshold=0.2682, model_name="ConvNext_v3", drop_overlap=True)
+    features, keep_tags = process_features(drop_blacklisted_tags(features))
+    wd14_caption = tags_to_text(features, use_escape=False, use_spaces=True)
+    rating = max(rating, key=rating.get)
+
     conversation = [
         {
             "role": "system",
@@ -89,22 +140,29 @@ def process_image(image_path, args):
         },
         {
             "role": "user",
-            "content": user_prompt
+            "content": f"<|image_1|>\n{wd14_caption}"
         }
     ]
 
-    description = do_conversation(conversation, image, max_new_tokens=800)
+    description = do_conversation(conversation, image, max_new_tokens=1024)
     conversation.append({"role": "assistant", "content": description})
 
-    conversation.extend([{"role": "user", "content": "Tags list should capture key elements such as the {characters, main object}, {setting or actions with pose}, {describe the background}, {emotions, artistic style and composition type}. Using comma-separated."}])
-    tags = do_conversation(conversation, image, max_new_tokens=300)
+    conversation.extend([{"role": "user", "content": "Tags list should have unique tag which capture key elements such as the {characters, main object}, {atmosphere, situation, setting, actions, poses}, {feelings, emotions, artistic style, composition type}, {background}. Using comma-separated."}])
 
-    description = description.replace('.', ',')
+    tags = do_conversation(conversation, image, max_new_tokens=500)
+    conversation.append({"role": "assistant", "content": tags})
 
     tags = tags.split(', ')
     tags = ', '.join(list(set([tag.replace('.', ' ').replace(',', ' ').strip() for tag in tags])))
+    # tags = re.sub(r"(person|girl|boy|woman|man|female)'s ", "", tags)
 
-    return description, tags
+    conversation.extend([{"role": "user", "content": "Tags list should have unique tag which capture key elements such as the {feelings, emotions, artistic style, composition type}, {background}. Using comma-separated."}])
+    dropout_tags = do_conversation(conversation, image, max_new_tokens=500)
+    dropout_tags = dropout_tags.split(', ')
+    dropout_tags = ', '.join(list(set([tag.replace('.', ' ').replace(',', ' ').strip() for tag in dropout_tags])))
+    # dropout_tags = re.sub(r"(person|girl|boy|woman|man|female)'s ", "", dropout_tags)
+
+    return description, tags, dropout_tags
 
 def find_and_process_images(directory, args):
     directory = directory.replace('\\', '/')
@@ -134,12 +192,19 @@ def find_and_process_images(directory, args):
             tag_file_path = Path(image_path).with_suffix('').with_suffix('.txt')
 
             if tag_file_path.exists() == False or args.override:
-                description, tags = process_image(image_path, args)
+                description, tags, dropout_tags = process_image(image_path, args)
 
                 if description != None and tags != None:
                     content = f"{trigger_word}{chartag_from_folder}___{tags}___ {description}\n"
+
+                    dropout_description = description.split('. ')
+                    if len(dropout_description) > 2:
+                        content += f"{trigger_word}{chartag_from_folder}{'. '.join(dropout_description[:2])}. ___{dropout_tags}___ {'. '.join(dropout_description[2:])}\n"
+                    else:
+                        content += f"{trigger_word}{chartag_from_folder} This image is following: ___{dropout_tags}___ {description}\n"
+
                     content += f"{trigger_word}{chartag_from_folder}{description}\n"
-                    content += f"{trigger_word}{chartag_from_folder}___{tags}___"
+                    content += f"{trigger_word}{chartag_from_folder} This image is following: ___{tags}___"
                     content = content.replace(',___', '___').lower()
 
                     with open(tag_file_path, 'w', encoding='utf-8') as file:
