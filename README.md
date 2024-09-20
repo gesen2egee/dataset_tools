@@ -28,19 +28,7 @@ py後面可以放args (中間要空格)
 
 --drop_colortag刪除WD14顏色標 del "black hair" "brown eyes"...  (前置與florence-2打的會保留)
 
-
-
-其他比較不會用到的
-
---continue_caption="天數整數" 從n天內打的標繼續
-
---rawdata 只打一行 也許正則圖這樣做比較好 不確定沒測試
-
---debiased 已棄用 已經用更好方式去除專有名詞和ocr 
-
-設置clip score上限減少florence偏差，如果發現florence很多作品名、角色幻覺可以用 不然不需要 會刪掉一些正常的標 
-
---custom_keeptag="字串類似is doing" 自定義前置，實驗性很慢效果差、不要用
+=====
 
 --upgrade 升級腳本，有需要才用
 
@@ -80,7 +68,11 @@ inaccurate, 前置, ___更少的標
 
 概念設置 python caption.py "資料集位置" --not_char
 
-kohya-ss --enable_wildcard --keep_tokens_separator="__" --network_train_unet_only 洗牌 
+kohya-ss Additional Parameters
+
+--enable_wildcard --keep_tokens_separator="__" --network_train_unet_only 
+
+洗牌 
 
 
 如果有訓練效果反饋或有什麼架構的微調建議再跟我說
